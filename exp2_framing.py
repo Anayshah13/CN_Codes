@@ -1,188 +1,248 @@
-"""Experiment 2: Framing techniques.
+"""Experiment 2: Framing.
 
-Aim: Character count, bit stuffing, and byte stuffing.
+Task 1 reads a PDF, turns the text into ASCII and binary, then frames it
+with character count, bit stuffing, and byte stuffing.
+
+Task 2 frames the token stream
+    A B ESC FLAG C D FLAG E ESC F
+with character stuffing, bit stuffing, and PPP-style byte stuffing.
+
 Run: python exp2_framing.py
-     python exp2_framing.py path\\to\\file.txt
 """
 
 from __future__ import annotations
 
+import math
 import random
-import sys
 from pathlib import Path
 
-FLAG = "01111110"
-ESC = "10101010"
+# HDLC flag. A 0 is stuffed after five 1s so this pattern stays reserved.
+FLAG_BITS = "01111110"
+# Task 1 uses the word ESC as the escape token inside the text.
+ESC = "ESC"
+FLAG = "FLAG"
 
 
-def to_binary(text: str) -> str:
-    return "".join(format(ord(ch), "08b") for ch in text)
+def read_pdf(filename: str) -> str:
+    """Pull the text out of every page. The lab import is PyPDF2; pypdf is the same API."""
+    try:
+        from PyPDF2 import PdfReader
+    except ImportError:
+        from pypdf import PdfReader
+    reader = PdfReader(filename)
+    text = ""
+    for page in reader.pages:
+        text += page.extract_text() or ""
+    return text
 
 
-def show_preprocessing(text: str) -> str:
-    print("\nPreprocessing")
-    print(f"Characters: {len(text)}")
-    preview = text[:80]
-    print("Text:", preview + ("..." if len(text) > 80 else ""))
-    ascii_codes = [ord(ch) for ch in preview]
-    print("ASCII :", ascii_codes)
-    binary = to_binary(text)
-    print("Binary length:", len(binary), "bits")
-    print("Binary preview:", binary[:64] + ("..." if len(binary) > 64 else ""))
-    return binary
+def text_to_ascii(text: str) -> list[int]:
+    """Each character becomes its ASCII code."""
+    return [ord(c) for c in text]
 
 
-def character_count(text: str) -> None:
-    """Each frame starts with a count of the following characters (1 to 16)."""
+def ascii_to_binary(ascii_values: list[int]) -> str:
+    """Each ASCII code becomes 8 bits."""
+    return "".join(format(value, "08b") for value in ascii_values)
+
+
+def character_count_framing(text: str) -> None:
+    """Frame = count, then that many characters.
+
+    The count is random from 2^0 to 2^16 (1 to 65536). Only the first
+    three frames are printed; a PDF would otherwise flood the screen.
+    """
+    print("\nCharacter Count Framing (first 3 frames)")
+    frames = []
     i = 0
-    frames = 0
-    overhead_chars = 0
-    print("\nCharacter-count frames  (count is the number of data characters)")
     while i < len(text):
-        count = random.randint(1, min(16, len(text) - i))
-        payload = text[i : i + count]
-        frames += 1
-        overhead_chars += 1
-        print(f"Frame {frames}: [{count}] {payload!r}")
+        count = random.randint(1, min(65536, len(text) - i))
+        frames.append((count, text[i : i + count]))
         i += count
-    overhead_bits = overhead_chars * 8
-    data_bits = len(text) * 8
-    percent = (overhead_bits / data_bits) * 100 if data_bits else 0
-    print(f"Frames: {frames}")
-    print(f"Overhead: {overhead_bits} bits ({percent:.2f}%)")
+    print("Total frames:", len(frames))
+    for number, (count, frame) in enumerate(frames[:3], 1):
+        preview = frame[:50] + ("..." if len(frame) > 50 else "")
+        print(f"\nFrame {number}")
+        print("Count:", count)
+        print("Data:", preview)
 
 
-def pad_to_multiple(binary: str, multiple: int = 128) -> tuple[str, int]:
-    """Pad with 1 followed by zeros so the bit string length is a multiple of 128."""
-    extra = (multiple - (len(binary) % multiple)) % multiple
-    if extra == 0:
-        return binary, 0
-    pad = "1" + ("0" * (extra - 1))
-    return binary + pad, extra
-
-
-def stuff_bits(payload: str) -> tuple[str, int]:
-    stuffed = []
+def bit_stuff(bits: str) -> str:
+    """Insert a 0 after every run of five 1s."""
+    stuffed = ""
     ones = 0
-    extra = 0
-    for bit in payload:
-        stuffed.append(bit)
+    for bit in bits:
+        stuffed += bit
         if bit == "1":
             ones += 1
             if ones == 5:
-                stuffed.append("0")
-                extra += 1
+                stuffed += "0"
                 ones = 0
         else:
             ones = 0
-    return "".join(stuffed), extra
+    return stuffed
 
 
-def bit_stuffing(binary: str, frame_size: int) -> None:
-    if frame_size <= 0 or (frame_size & (frame_size - 1)) != 0:
-        print("Frame size must be a power of 2 (for example 8, 16, 32, 64, 128).")
-        return
-
-    prepared, pad_bits = pad_to_multiple(binary, 128)
-    print(f"\nBit stuffing   flag={FLAG}   frame size={frame_size} bits")
-    print(f"File padded by {pad_bits} bits so length is a multiple of 128.")
-
-    stuffed_total = 0
-    flag_bits = 0
-    frame_no = 0
-    for start in range(0, len(prepared), frame_size):
-        payload = prepared[start : start + frame_size]
-        stuffed, extra = stuff_bits(payload)
-        stuffed_total += extra
-        flag_bits += 16
-        frame_no += 1
-        print(f"Frame {frame_no}: {FLAG} {stuffed} {FLAG}   (stuffed {extra} bits)")
-
-    overhead = stuffed_total + pad_bits + flag_bits
-    percent = (overhead / len(binary)) * 100 if binary else 0
-    print(f"Frames: {frame_no}")
-    print(f"Overhead: {overhead} bits ({percent:.2f}%)")
+def pad_to_128(bits: str) -> str:
+    """Pad with 1 followed by zeros until the length is a multiple of 128."""
+    extra = (128 - len(bits) % 128) % 128
+    if extra == 0:
+        return bits
+    return bits + "1" + ("0" * (extra - 1))
 
 
-def byte_stuffing(binary: str) -> None:
-    bytes_ = [binary[i : i + 8] for i in range(0, len(binary), 8)]
-    if bytes_ and len(bytes_[-1]) < 8:
-        bytes_[-1] = bytes_[-1].ljust(8, "0")
+def bit_stuffing_frames(binary: str, size: int) -> None:
+    """Fixed-length frames. Size should be a power of 2 (64, 128, 256)."""
+    print("\nBit stuffing (first 3 frames)")
+    prepared = pad_to_128(binary)
+    stuffed = bit_stuff(prepared)
+    frames = [stuffed[i : i + size] for i in range(0, len(stuffed), size)]
+    print("Total frames:", len(frames))
+    for number, frame in enumerate(frames[:3], 1):
+        print(f"\nFrame {number}")
+        print(FLAG_BITS + frame + FLAG_BITS)
 
-    # Drop ESC into the stream at random gaps so stuffing is visible.
-    stuffed_source = []
-    inserted = 0
-    index = 0
-    while index < len(bytes_):
-        gap = random.randint(1, min(16, len(bytes_) - index))
-        stuffed_source.extend(bytes_[index : index + gap])
-        index += gap
-        if index < len(bytes_) and random.random() < 0.35:
-            stuffed_source.append(ESC)
-            inserted += 1
 
-    print(f"\nByte stuffing   FLAG={FLAG}   ESC={ESC}")
-    print(f"ESC bytes inserted at random gaps: {inserted}")
+def byte_stuffing(text: str) -> None:
+    """Variable-length byte stuffing on the characters of the file.
 
-    i = 0
-    frame_no = 0
-    flag_count = 0
-    esc_count = 0
-    while i < len(stuffed_source):
-        size = random.randint(1, min(8, len(stuffed_source) - i))
-        chunk = stuffed_source[i : i + size]
-        body = []
-        frame_no += 1
-        flag_count += 2
-        for byte in chunk:
-            if byte in (FLAG, ESC):
-                body.append(ESC)
-                esc_count += 1
-            body.append(byte)
-        print(f"Frame {frame_no}: {FLAG} {' '.join(body)} {FLAG}")
-        i += size
+    ESC is inserted at a random gap between 1 and 65536, then any ESC
+    or FLAG already in the data is prefixed with another ESC.
+    """
+    print("\nByte stuffing (first 3 frames)")
+    data = list(text)
+    if data:
+        interval = random.randint(1, min(65536, len(data)))
+        pos = interval
+        while pos < len(data):
+            data.insert(pos, ESC)
+            pos += interval + 1
+    stuffed: list[str] = []
+    for ch in data:
+        if ch == ESC or ch == FLAG:
+            stuffed.append(ESC)
+        stuffed.append(ch)
+    frame_size = 30
+    frames = [stuffed[i : i + frame_size] for i in range(0, len(stuffed), frame_size)]
+    print("Total frames:", len(frames))
+    for number, frame in enumerate(frames[:3], 1):
+        print(f"\nFrame {number}")
+        print("FLAG", " ".join(frame), "FLAG")
 
-    overhead = (flag_count + esc_count) * 8
-    percent = (overhead / len(binary)) * 100 if binary else 0
-    print(f"Frames: {frame_no}")
-    print(f"Overhead: {overhead} bits ({percent:.2f}%)")
+
+def observation(binary_len: int) -> None:
+    """Flag overhead for frame sizes 64, 128, and 256.
+
+    Two flags are 16 bits. Overhead % = (frames * 16) / original bits.
+    """
+    print("\nObservation")
+    print(f"{'Frame':<10}{'No Frames':<15}{'Overhead':<15}{'Overhead %'}")
+    for size in (64, 128, 256):
+        frames = math.ceil(binary_len / size)
+        overhead = frames * 16
+        percent = (overhead / binary_len) * 100 if binary_len else 0
+        print(f"{size:<10}{frames:<15}{overhead:<15}{percent:.2f}")
+
+
+def task1() -> None:
+    filename = input("Enter PDF filename: ").strip()
+    text = read_pdf(filename)
+    print("\nPDF loaded")
+    print("Characters:", len(text))
+    ascii_values = text_to_ascii(text)
+    print("\nFirst 10 ASCII values:")
+    print(ascii_values[:10])
+    binary = ascii_to_binary(ascii_values)
+    print("\nFirst 64 binary bits:")
+    print(binary[:64])
+    character_count_framing(text)
+    size = int(input("\nEnter frame size (64/128/256): ").strip())
+    bit_stuffing_frames(binary, size)
+    byte_stuffing(text)
+    observation(len(binary))
+
+
+# --- Task 2: the token stream from the sheet ---
+
+TOKENS = ["A", "B", "ESC", "FLAG", "C", "D", "FLAG", "E", "ESC", "F"]
+
+
+def character_stuffing(data: list[str]) -> list[str]:
+    """FLAG ... FLAG. ESC or FLAG inside the data is prefixed with ESC."""
+    stuffed = [FLAG]
+    for ch in data:
+        if ch in (ESC, FLAG):
+            stuffed.append(ESC)
+        stuffed.append(ch)
+    stuffed.append(FLAG)
+    return stuffed
+
+
+def task2_bit_stuffing(data: list[str]) -> tuple[str, str, str]:
+    """ESC is byte 0x1B, FLAG is byte 0x7E. Stuff a 0 after five 1s, then add flags."""
+    byte_data = []
+    for ch in data:
+        if ch == ESC:
+            byte_data.append(0x1B)
+        elif ch == FLAG:
+            byte_data.append(0x7E)
+        else:
+            byte_data.append(ord(ch))
+    binary_data = "".join(format(b, "08b") for b in byte_data)
+    stuffed = bit_stuff(binary_data)
+    final_frame = FLAG_BITS + stuffed + FLAG_BITS
+    return binary_data, stuffed, final_frame
+
+
+def task2_byte_stuffing(data: list[str]) -> list[int]:
+    """PPP byte stuffing.
+
+    Frame starts and ends with 0x7E. If a byte is 0x7E or 0x7D, send 0x7D
+    and then that byte XOR 0x20.
+    """
+    stuffed = [0x7E]
+    for ch in data:
+        if ch == ESC:
+            byte = 0x1B
+        elif ch == FLAG:
+            byte = 0x7E
+        else:
+            byte = ord(ch)
+        if byte in (0x7E, 0x7D):
+            stuffed.append(0x7D)
+            stuffed.append(byte ^ 0x20)
+        else:
+            stuffed.append(byte)
+    stuffed.append(0x7E)
+    return stuffed
+
+
+def task2() -> None:
+    print("Data:", " ".join(TOKENS))
+    char_frame = character_stuffing(TOKENS)
+    print("\nCharacter stuffing:")
+    print(" ".join(char_frame))
+    binary, stuffed_bits, final_bits = task2_bit_stuffing(TOKENS)
+    print("\nBinary data:")
+    print(binary)
+    print("\nBit stuffed data:")
+    print(stuffed_bits)
+    print("\nFinal bit frame:")
+    print(final_bits)
+    byte_frame = task2_byte_stuffing(TOKENS)
+    print("\nByte stuffing (hex):")
+    print(" ".join(f"{b:02X}" for b in byte_frame))
 
 
 def main() -> None:
-    path = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(__file__).with_name("exp2_sample.txt")
-    if not path.exists():
-        print(f"File not found: {path}")
-        return
-    text = path.read_text(encoding="utf-8", errors="replace")
-    if not text:
-        print("File is empty.")
-        return
-
-    print("Experiment 2: Framing")
-    print(f"Input file: {path}")
-    binary = show_preprocessing(text)
-
-    while True:
-        print("\nMethod:")
-        print("1. Character count")
-        print("2. Bit stuffing")
-        print("3. Byte stuffing")
-        print("4. Exit")
-        choice = input("Enter: ").strip()
-        if choice == "1":
-            character_count(text)
-        elif choice == "2":
-            raw = input("Enter frame size (power of 2, e.g. 64): ").strip()
-            if not raw.isdigit():
-                print("Enter a number.")
-                continue
-            bit_stuffing(binary, int(raw))
-        elif choice == "3":
-            byte_stuffing(binary)
-        elif choice == "4":
-            break
-        else:
-            print("Invalid choice")
+    print("Experiment 2")
+    print("1. Task 1 — frame a PDF")
+    print("2. Task 2 — A B ESC FLAG C D FLAG E ESC F")
+    choice = input("Enter: ").strip()
+    if choice == "2":
+        task2()
+    else:
+        task1()
 
 
 if __name__ == "__main__":

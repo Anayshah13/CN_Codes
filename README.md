@@ -12,8 +12,8 @@ There is no Experiment 3 PDF in this folder.
 | 6 | VLSM | `python exp6_vlsm.py` |
 | 7 | Wireshark / TCP/IP layers | `python exp7_wireshark.py` (capture itself is done in Wireshark) |
 | 8 | TCP sockets, selection sort | server, then two clients (below) |
-| 9 | UDP group chat | server, then two or more clients (below) |
-| 10 | Stop-and-Wait ARQ | `python exp10_stop_and_wait.py` and `python exp10_stop_and_wait_gui.py` |
+| 9 | UDP hello | server, then the client (below) |
+| 10 | Stop-and-Wait | trace, or the UDP server and client (below) |
 
 Experiment 8, in three terminals:
 
@@ -26,8 +26,16 @@ python exp8_tcp_sort_client.py 2
 Experiment 9, server first:
 
 ```text
-python exp9_udp_chat_server.py
-python exp9_udp_chat_client.py
+python exp9_udp_server.py
+python exp9_udp_client.py
 ```
 
-Type `bye` in a chat client to leave. Standard library only; no packages to install.
+Experiment 10:
+
+```text
+python exp10_stop_and_wait.py
+python exp10_stop_and_wait_server.py
+python exp10_stop_and_wait_client.py
+```
+
+Standard library only. Experiment 2 task 1 also accepts `pypdf` or `PyPDF2` to read a PDF.

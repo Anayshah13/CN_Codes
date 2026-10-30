@@ -1,0 +1,2924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CN lab notes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,560;9..144,680&family=IBM+Plex+Mono:wght@400;500&family=Literata:opsz,wght@7..72,420;7..72,650&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1c1712;
+    --muted: #6a5e52;
+    --paper: #f6f0e6;
+    --sheet: #fffaf3;
+    --band: #ebe3d4;
+    --line: #d8cdb8;
+    --rust: #b8432a;
+    --rust-ink: #7d2a18;
+    --side: #241c16;
+    --side-2: #32281f;
+    --side-text: #f4eadc;
+    --side-dim: #c9b8a2;
+    --code: #1e1915;
+    --ok: #1f6b45;
+    --shadow: 0 18px 40px rgba(48, 32, 18, 0.08);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    color: var(--ink);
+    background:
+      radial-gradient(1200px 500px at 100% -10%, rgba(184, 67, 42, 0.08), transparent 50%),
+      var(--paper);
+    font-family: Literata, "Iowan Old Style", Palatino, serif;
+    font-size: 17px;
+    line-height: 1.55;
+  }
+  button, input { font: inherit; }
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: rgba(246, 240, 230, 0.94);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+    padding: 10px 14px 0;
+    padding-top: max(10px, env(safe-area-inset-top));
+  }
+  .toprow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .brand {
+    font-family: Fraunces, serif;
+    font-weight: 680;
+    letter-spacing: -0.03em;
+    font-size: 1.15rem;
+    margin-right: auto;
+    white-space: nowrap;
+  }
+  .brand span { color: var(--rust); }
+  .ghost {
+    border: 1px solid var(--line);
+    background: var(--sheet);
+    color: var(--ink);
+    border-radius: 999px;
+    padding: 8px 12px;
+    min-height: 40px;
+    cursor: pointer;
+  }
+  .tabs {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 0;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    flex: 0 0 auto;
+    border: 1px solid var(--line);
+    border-bottom: none;
+    background: var(--band);
+    color: var(--muted);
+    border-radius: 12px 12px 0 0;
+    padding: 10px 12px 9px;
+    min-height: 48px;
+    cursor: pointer;
+    text-align: left;
+  }
+  .tab b {
+    display: block;
+    font-family: Fraunces, serif;
+    font-size: 0.95rem;
+    color: var(--ink);
+    font-weight: 680;
+  }
+  .tab small {
+    display: block;
+    font-family: Literata, serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.01em;
+  }
+  .tab[aria-selected="true"] {
+    background: var(--sheet);
+    color: var(--rust-ink);
+    box-shadow: inset 0 3px 0 var(--rust);
+    position: relative;
+    top: 1px;
+  }
+  .tab[aria-selected="true"] b { color: var(--rust-ink); }
+  .layout { display: block; }
+  aside {
+    display: none;
+  }
+  aside.open {
+    display: block;
+    position: fixed;
+    z-index: 30;
+    inset: 0 auto 0 0;
+    width: min(320px, 86vw);
+    background: var(--side);
+    color: var(--side-text);
+    padding: 18px 14px 28px;
+    padding-top: max(18px, env(safe-area-inset-top));
+    overflow: auto;
+    box-shadow: 12px 0 40px rgba(0,0,0,0.25);
+  }
+  .scrim {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(28, 23, 18, 0.45);
+    z-index: 25;
+  }
+  .scrim.show { display: block; }
+  aside h2 {
+    font-family: Fraunces, serif;
+    font-size: 1rem;
+    margin: 8px 8px 12px;
+    font-weight: 680;
+  }
+  aside a {
+    display: block;
+    color: var(--side-dim);
+    text-decoration: none;
+    padding: 11px 12px;
+    border-radius: 10px;
+    margin-bottom: 4px;
+  }
+  aside a:focus-visible, .tab:focus-visible, .ghost:focus-visible {
+    outline: 2px solid var(--rust);
+    outline-offset: 2px;
+  }
+  aside a.active, aside a:hover { background: var(--side-2); color: white; }
+  main {
+    padding: 18px 16px 72px;
+    padding-bottom: max(72px, env(safe-area-inset-bottom));
+    max-width: 820px;
+  }
+  article[hidden] { display: none; }
+  .kicker {
+    font-family: IBM Plex Mono, monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--rust);
+    margin: 0 0 4px;
+  }
+  h1 {
+    font-family: Fraunces, serif;
+    font-weight: 680;
+    font-size: clamp(1.8rem, 5vw, 2.6rem);
+    letter-spacing: -0.03em;
+    line-height: 1.12;
+    margin: 0 0 8px;
+  }
+  .aim {
+    font-size: 1.05rem;
+    margin: 0 0 18px;
+  }
+  h3 {
+    font-family: Fraunces, serif;
+    font-size: 1.28rem;
+    margin: 28px 0 8px;
+    scroll-margin-top: 132px;
+  }
+  ul, ol { padding-left: 1.2rem; }
+  li { margin: 0.35rem 0; }
+  .card, .say, pre, table {
+    background: var(--sheet);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+  }
+  .card, .say { padding: 12px 14px; margin: 12px 0; }
+  .say {
+    border-left: 4px solid var(--rust);
+    background: #fff6ef;
+  }
+  .say strong { font-family: Fraunces, serif; }
+  pre {
+    padding: 12px 14px;
+    overflow-x: auto;
+    background: var(--code);
+    color: #f6efe4;
+    font-family: IBM Plex Mono, ui-monospace, monospace;
+    font-size: 0.82rem;
+    line-height: 1.45;
+    box-shadow: var(--shadow);
+  }
+  code {
+    font-family: IBM Plex Mono, ui-monospace, monospace;
+    font-size: 0.86em;
+  }
+  p code, li code, td code {
+    background: #efe6d8;
+    padding: 0.05em 0.35em;
+    border-radius: 5px;
+  }
+  .wrap { overflow-x: auto; margin: 12px 0 4px; }
+  table { border-collapse: collapse; width: 100%; min-width: 640px; font-size: 0.92rem; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-family: Fraunces, serif; font-weight: 650; background: #f3eadc; }
+  details {
+    background: var(--sheet);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    margin: 8px 0;
+    padding: 0 12px;
+  }
+  summary {
+    cursor: pointer;
+    padding: 12px 0;
+    font-weight: 650;
+    min-height: 44px;
+  }
+  details p { margin-top: 0; }
+  .run {
+    font-family: IBM Plex Mono, monospace;
+    font-size: 0.82rem;
+    background: #efe6d8;
+    padding: 10px 12px;
+    border-radius: 10px;
+    overflow-x: auto;
+  }
+  .filetag {
+    font-family: IBM Plex Mono, monospace;
+    font-size: 0.78rem;
+    color: var(--rust-ink);
+    margin: 0 0 8px;
+  }
+  .why { margin: 16px 0 6px; }
+  .why strong { font-family: Fraunces, serif; }
+  details pre { margin: 0 0 12px; }
+  @media (min-width: 960px) {
+    .ghost.sections { display: none; }
+    .layout { display: grid; grid-template-columns: 240px 1fr; }
+    aside {
+      display: block;
+      position: sticky;
+      top: 108px;
+      height: calc(100vh - 120px);
+      background: transparent;
+      color: var(--ink);
+      box-shadow: none;
+      width: auto;
+      padding: 18px 8px 18px 18px;
+      overflow: auto;
+    }
+    aside h2 { color: var(--muted); font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; }
+    aside a { color: var(--muted); padding: 8px 10px; }
+    aside a.active, aside a:hover { background: #efe4d4; color: var(--ink); }
+    .scrim { display: none !important; }
+    main { padding: 28px 40px 80px; }
+    h3 { scroll-margin-top: 120px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="toprow">
+    <div class="brand">CN <span>notes</span></div>
+    <button class="ghost sections" id="openSide" type="button">Sections</button>
+  </div>
+  <nav class="tabs" role="tablist" aria-label="Experiments">
+    <button class="tab" role="tab" data-tab="e1" aria-selected="true"><b>1</b><small>Commands</small></button>
+    <button class="tab" role="tab" data-tab="e4"><b>4</b><small>Hamming</small></button>
+    <button class="tab" role="tab" data-tab="e5"><b>5</b><small>CRC</small></button>
+    <button class="tab" role="tab" data-tab="e6"><b>6</b><small>VLSM</small></button>
+    <button class="tab" role="tab" data-tab="e7"><b>7</b><small>Wireshark</small></button>
+    <button class="tab" role="tab" data-tab="e8"><b>8</b><small>TCP</small></button>
+    <button class="tab" role="tab" data-tab="e9"><b>9</b><small>UDP</small></button>
+    <button class="tab" role="tab" data-tab="e10"><b>10</b><small>Stop-Wait</small></button>
+  </nav>
+</header>
+<div class="scrim" id="scrim"></div>
+<div class="layout">
+<aside id="side">
+  <h2>In this experiment</h2>
+  <nav id="sideNav"></nav>
+</aside>
+<main>
+<article data-panel="e1">
+  <p class="kicker">Experiment 1 · Data link / tools</p>
+  <h1>Linux networking commands</h1>
+  <p class="aim">Show that you can read a machine’s name, DNS, routes, ARP cache, and interface addresses.</p>
+  <h3 id="e1-idea">What each command answers</h3>
+  <div class="wrap"><table>
+    <tr><th>Command</th><th>Question it answers</th><th>Windows if the lab is not Linux</th></tr>
+    <tr><td><code>hostname</code></td><td>What is this computer called on the network?</td><td><code>hostname</code></td></tr>
+    <tr><td><code>nslookup google.com</code></td><td>Which IP addresses does DNS give for this name?</td><td>same</td></tr>
+    <tr><td><code>whois google.com</code></td><td>Who registered this domain, and which registrar holds it?</td><td>often not installed</td></tr>
+    <tr><td><code>route -n</code></td><td>For a destination, which gateway and interface are used?</td><td><code>route print -4</code></td></tr>
+    <tr><td><code>arp -n</code></td><td>Which MAC address was seen for which IP?</td><td><code>arp -a</code></td></tr>
+    <tr><td><code>ip addr</code></td><td>What IPv4/IPv6 and MAC does each interface have?</td><td><code>ipconfig /all</code></td></tr>
+  </table></div>
+  <h3 id="e1-read">How to read the output</h3>
+  <ul>
+    <li><strong>nslookup.</strong> “Non-authoritative answer” means the reply came from a cache, not from the domain’s own DNS server. Several A records means several IPv4 addresses. Addresses with colons are IPv6.</li>
+    <li><strong>route.</strong> <code>UG</code> on <code>0.0.0.0</code> is the default gateway. <code>U</code> alone means a directly connected network. <code>Iface</code> is the NIC used, such as <code>wlo1</code>.</li>
+    <li><strong>arp.</strong> One row maps the gateway’s IP to its Ethernet MAC. The cache is learned, not configured by hand.</li>
+    <li><strong>ip addr.</strong> <code>lo</code> is 127.0.0.1, used only inside this machine. <code>UP</code> means the interface is on. <code>/24</code> means the first 24 bits are the network.</li>
+  </ul>
+  <div class="say"><strong>Say this.</strong> DNS turns a name into an IP. ARP turns an IP on the local LAN into a MAC. The routing table decides which next hop gets the packet.</div>
+  <h3 id="e1-src">The code</h3>
+  <p class="filetag">exp1_linux_networking_commands.py — Runs the six lab commands and prints why each one matters.</p>
+  <p class="why"><strong>Top of the file</strong> — The six commands the sheet asks for. Linux is what you type in the lab. Windows is the stand-in on this PC.</p>
+  <pre>&quot;&quot;&quot;Experiment 1: Linux networking commands.
+
+Aim: Study hostname, nslookup, whois, route, arp, and ip addr.
+Run: python exp1_linux_networking_commands.py
+&quot;&quot;&quot;
+
+from __future__ import annotations
+
+import shutil
+import subprocess
+import sys
+
+COMMANDS = [
+    {
+        &quot;name&quot;: &quot;hostname&quot;,
+        &quot;use&quot;: &quot;Prints the name of this machine on the network.&quot;,
+        &quot;linux&quot;: [&quot;hostname&quot;],
+        &quot;windows&quot;: [&quot;hostname&quot;],
+    },
+    {
+        &quot;name&quot;: &quot;nslookup&quot;,
+        &quot;use&quot;: &quot;Asks DNS for the IP address of a domain name.&quot;,
+        &quot;linux&quot;: [&quot;nslookup&quot;, &quot;google.com&quot;],
+        &quot;windows&quot;: [&quot;nslookup&quot;, &quot;google.com&quot;],
+    },
+    {
+        &quot;name&quot;: &quot;whois&quot;,
+        &quot;use&quot;: &quot;Looks up registration details of a domain or IP address.&quot;,
+        &quot;linux&quot;: [&quot;whois&quot;, &quot;google.com&quot;],
+        &quot;windows&quot;: [&quot;whois&quot;, &quot;google.com&quot;],
+    },
+    {
+        &quot;name&quot;: &quot;route&quot;,
+        &quot;use&quot;: &quot;Shows the kernel routing table: which gateway is used for each destination.&quot;,
+        &quot;linux&quot;: [&quot;route&quot;, &quot;-n&quot;],
+        &quot;windows&quot;: [&quot;route&quot;, &quot;print&quot;, &quot;-4&quot;],
+    },
+    {
+        &quot;name&quot;: &quot;arp&quot;,
+        &quot;use&quot;: &quot;Shows the ARP cache: IP address mapped to a MAC address.&quot;,
+        &quot;linux&quot;: [&quot;arp&quot;, &quot;-n&quot;],
+        &quot;windows&quot;: [&quot;arp&quot;, &quot;-a&quot;],
+    },
+    {
+        &quot;name&quot;: &quot;ip addr&quot;,
+        &quot;use&quot;: &quot;Shows each interface, its MAC address, and its IPv4/IPv6 addresses.&quot;,
+        &quot;linux&quot;: [&quot;ip&quot;, &quot;addr&quot;],
+        &quot;windows&quot;: [&quot;ipconfig&quot;, &quot;/all&quot;],
+    },
+]</pre>
+  <p class="why"><strong>run</strong> — Runs one command and returns its text. A missing command does not stop the rest.</p>
+  <pre>def run(argv: list[str]) -&gt; str:
+    try:
+        completed = subprocess.run(
+            argv,
+            capture_output=True,
+            text=True,
+            timeout=20,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return f&quot;(could not run {&#x27; &#x27;.join(argv)}: {exc})&quot;
+    text = (completed.stdout or &quot;&quot;) + (completed.stderr or &quot;&quot;)
+    text = text.strip()
+    return text if text else &quot;(no output)&quot;</pre>
+  <p class="why"><strong>main</strong> — On Windows, runs the Windows command when the Linux one is not installed.</p>
+  <pre>def main() -&gt; None:
+    windows = sys.platform.startswith(&quot;win&quot;)
+    print(&quot;Experiment 1: Linux networking commands&quot;)
+    print(&quot;On a Linux lab PC, type the Linux command. This script runs that&quot;)
+    print(&quot;command when it exists, and the Windows equivalent otherwise.\n&quot;)
+
+    for item in COMMANDS:
+        linux_cmd = &quot; &quot;.join(item[&quot;linux&quot;])
+        print(&quot;=&quot; * 72)
+        print(item[&quot;name&quot;])
+        print(item[&quot;use&quot;])
+        print(f&quot;Linux command: {linux_cmd}&quot;)
+
+        if not windows and shutil.which(item[&quot;linux&quot;][0]):
+            print(run(item[&quot;linux&quot;]))
+        elif windows and shutil.which(item[&quot;windows&quot;][0]):
+            fallback = &quot; &quot;.join(item[&quot;windows&quot;])
+            if fallback != linux_cmd:
+                print(f&quot;Windows equivalent: {fallback}&quot;)
+            print(run(item[&quot;windows&quot;]))
+        elif shutil.which(item[&quot;linux&quot;][0]):
+            print(run(item[&quot;linux&quot;]))
+        else:
+            print(f&quot;&#x27;{item[&#x27;linux&#x27;][0]}&#x27; is not installed on this machine.&quot;)
+            print(f&quot;On the lab Linux PC, run: {linux_cmd}&quot;)
+        print()
+
+
+if __name__ == &quot;__main__&quot;:
+    main()</pre>
+  <h3 id="e1-viva">Viva</h3>
+  <details><summary>Why can nslookup show many addresses for one name?</summary><p>The name has several A or AAAA records. The client may use any of them. That is how large sites spread load.</p></details>
+  <details><summary>What is the default route?</summary><p>Destination <code>0.0.0.0/0</code>. Anything that does not match a more specific route is sent to that gateway.</p></details>
+  <details><summary>Where does ARP sit?</summary><p>It binds a network-layer IP address to a data-link MAC address on the same LAN. It is not used to cross the internet; each hop does its own ARP.</p></details>
+  <h3 id="e1-run">Run</h3>
+  <p class="run">python exp1_linux_networking_commands.py</p>
+</article>
+
+<article data-panel="e4" hidden>
+  <p class="kicker">Experiment 4 · Data link</p>
+  <h1>Hamming code</h1>
+  <p class="aim">Detect and correct a single-bit error with even parity bits placed at powers of two.</p>
+  <h3 id="e4-idea">Layout</h3>
+  <p>Number bits from the right, starting at 1. Positions 1, 2, 4, 8, … are parity. Every other position is data, filled left to right from the message. Use even parity: each parity bit is set so the bits it checks XOR to 0.</p>
+  <p>Parity bit <em>p</em> checks every position whose binary number has that bit set. Position 1 checks 1, 3, 5, 7, … Position 2 checks 2, 3, 6, 7, … Position 4 checks 4, 5, 6, 7, …</p>
+  <p>Redundant bits <em>r</em> satisfy 2<sup>r</sup> ≥ m + r + 1, where m is the number of data bits.</p>
+  <h3 id="e4-example">Example you can write on paper</h3>
+  <p>Data <code>1011</code> needs r = 3, so the codeword is 7 bits. Positions 7→1 print as <code>1100110</code>.</p>
+  <div class="wrap"><table>
+    <tr><th>Position</th><th>7</th><th>6</th><th>5</th><th>4</th><th>3</th><th>2</th><th>1</th></tr>
+    <tr><td>Role</td><td>data</td><td>data</td><td>data</td><td>p4</td><td>data</td><td>p2</td><td>p1</td></tr>
+    <tr><td>Bit</td><td>1</td><td>1</td><td>0</td><td>0</td><td>1</td><td>1</td><td>0</td></tr>
+  </table></div>
+  <p>Flip position 4 and the word becomes <code>1101110</code>. The receiver recomputes the three parity checks. A failed check adds that parity’s position into the syndrome. Syndrome 4 means “flip position 4”. The corrected word is <code>1100110</code> again. Syndrome 0 means no error.</p>
+  <div class="say"><strong>Say this.</strong> One wrong bit is corrected. Two wrong bits make a syndrome that points at the wrong place, so Hamming as used here is single-error correction.</div>
+  <h3 id="e4-file">File part of the lab</h3>
+  <p>The file is split into 16-bit blocks and again into 32-bit blocks. About one block in twenty is given a single flipped bit. Each block is encoded, the syndrome is computed, and that bit is flipped back. The table reports total blocks, injected errors, and corrections.</p>
+  <h3 id="e4-code">Code to point at</h3>
+  <pre>while (1 &lt;&lt; r) &lt; m + r + 1:
+    r += 1
+# parity positions: pos &amp; (pos - 1) == 0
+# syndrome: add pos when that parity check is 1
+bits[len(bits) - error_position] flipped</pre>
+  <h3 id="e4-src">The code</h3>
+  <p class="filetag">exp4_hamming.py — Builds an even-parity Hamming code, finds a single flipped bit, and flips it back.</p>
+  <p class="why"><strong>Top of the file</strong> — Nothing to configure. Pass a bit string, or let it encode the sample file.</p>
+  <pre>&quot;&quot;&quot;Experiment 4: Hamming code for single-bit error detection and correction.
+
+Even parity. Bit positions are numbered from 1. Parity bits sit at powers of 2.
+The printed codeword is position n ... position 1 (same order as the lab program).
+
+Run:
+  python exp4_hamming.py                  # short viva example, then a file demo
+  python exp4_hamming.py 1011001          # encode one data block
+  python exp4_hamming.py --file notes.txt # 16-bit and 32-bit frames
+&quot;&quot;&quot;
+
+from __future__ import annotations
+
+import random
+import sys
+from pathlib import Path</pre>
+  <p class="why"><strong>hamming_encode</strong> — Parity bits sit at positions 1, 2, 4, 8. Data fills the other positions. Each parity bit is set so the bits it checks XOR to 0.</p>
+  <pre>def hamming_encode(data: str) -&gt; str:
+    if not data or any(bit not in &quot;01&quot; for bit in data):
+        raise ValueError(&quot;data must be a binary string&quot;)
+    m = len(data)
+    r = 0
+    while (1 &lt;&lt; r) &lt; m + r + 1:
+        r += 1
+    n = m + r
+    code = [0] * (n + 1)  # 1-based
+    j = 0
+    for pos in range(1, n + 1):
+        if pos &amp; (pos - 1) == 0:
+            continue
+        code[pos] = int(data[j])
+        j += 1
+    pos = 1
+    while pos &lt;= n:
+        parity = 0
+        for i in range(1, n + 1):
+            if i &amp; pos:
+                parity ^= code[i]
+        code[pos] = parity
+        pos &lt;&lt;= 1
+    return &quot;&quot;.join(str(code[pos]) for pos in range(n, 0, -1))</pre>
+  <p class="why"><strong>syndrome</strong> — The receiver repeats those parity checks. Add the position of every check that fails. That sum is the bad bit. 0 means no error.</p>
+  <pre>def syndrome(received: str) -&gt; int:
+    n = len(received)
+    code = [0] * (n + 1)
+    for pos in range(1, n + 1):
+        code[pos] = int(received[n - pos])
+    error_position = 0
+    pos = 1
+    while pos &lt;= n:
+        parity = 0
+        for i in range(1, n + 1):
+            if i &amp; pos:
+                parity ^= code[i]
+        if parity:
+            error_position += pos
+        pos &lt;&lt;= 1
+    return error_position</pre>
+  <p class="why"><strong>correct</strong> — Flips the bit the syndrome names. Position 1 is the rightmost bit of the printed codeword.</p>
+  <pre>def correct(received: str, error_position: int) -&gt; str:
+    if error_position == 0:
+        return received
+    bits = list(received)
+    index = len(bits) - error_position
+    if index &lt; 0 or index &gt;= len(bits):
+        return received
+    bits[index] = &quot;1&quot; if bits[index] == &quot;0&quot; else &quot;0&quot;
+    return &quot;&quot;.join(bits)</pre>
+  <p class="why"><strong>flip_one</strong> — Demo only. Flips one random bit so you can watch the correction.</p>
+  <pre>def flip_one(codeword: str) -&gt; tuple[str, int]:
+    bits = list(codeword)
+    index = random.randrange(len(bits))
+    bits[index] = &quot;1&quot; if bits[index] == &quot;0&quot; else &quot;0&quot;
+    return &quot;&quot;.join(bits), len(bits) - index</pre>
+  <p class="why"><strong>explain_block</strong> — Prints data, codeword, the damaged word, the syndrome, and the corrected word for one short string.</p>
+  <pre>def explain_block(data: str, force_error: bool = True) -&gt; None:
+    encoded = hamming_encode(data)
+    print(f&quot;Data        : {data}&quot;)
+    print(f&quot;Hamming code: {encoded}&quot;)
+    if not force_error:
+        position = syndrome(encoded)
+        print(f&quot;Syndrome    : {position} (0 means no error)&quot;)
+        return
+    received, flipped_pos = flip_one(encoded)
+    position = syndrome(received)
+    fixed = correct(received, position)
+    print(f&quot;Received    : {received}  (flipped position {flipped_pos})&quot;)
+    print(f&quot;Syndrome    : {position}&quot;)
+    print(f&quot;Corrected   : {fixed}&quot;)
+    print(&quot;Match       :&quot;, &quot;yes&quot; if fixed == encoded else &quot;no&quot;)</pre>
+  <p class="why"><strong>process_file</strong> — Splits a file into 16-bit or 32-bit blocks. About one block in twenty gets a single-bit error, then that bit is corrected.</p>
+  <pre>def process_file(data: bytes, frame_size: int) -&gt; tuple[int, int, int]:
+    binary = &quot;&quot;.join(format(byte, &quot;08b&quot;) for byte in data)
+    padding = (frame_size - len(binary) % frame_size) % frame_size
+    binary += &quot;0&quot; * padding
+    total_blocks = len(binary) // frame_size
+    error_blocks = max(1, total_blocks // 20)
+    selected = set(random.sample(range(total_blocks), min(error_blocks, total_blocks)))
+    errors = 0
+    corrections = 0
+    shown = 0
+    for block in range(total_blocks):
+        start = block * frame_size
+        payload = binary[start : start + frame_size]
+        encoded = hamming_encode(payload)
+        received = encoded
+        if block in selected:
+            received, _ = flip_one(encoded)
+            errors += 1
+        position = syndrome(received)
+        corrected = correct(received, position)
+        if position != 0:
+            corrections += 1
+        if shown &lt; 3:
+            print(f&quot;  block {block}: data {payload}&quot;)
+            print(f&quot;           code {encoded}&quot;)
+            if received != encoded:
+                print(f&quot;           rx   {received} -&gt; {corrected}&quot;)
+            shown += 1
+    if total_blocks &gt; shown:
+        print(f&quot;  ... {total_blocks - shown} more blocks&quot;)
+    return total_blocks, errors, corrections</pre>
+  <p class="why"><strong>main</strong> — python exp4_hamming.py 1011 encodes that string. With no argument it encodes the sample file at both frame sizes.</p>
+  <pre>def main() -&gt; None:
+    print(&quot;Experiment 4: Hamming code (even parity, single-bit correction)&quot;)
+    args = sys.argv[1:]
+
+    if args and args[0] == &quot;--file&quot;:
+        path = Path(args[1]) if len(args) &gt; 1 else Path(__file__).with_name(&quot;exp2_sample.txt&quot;)
+    elif args and set(args[0]) &lt;= {&quot;0&quot;, &quot;1&quot;}:
+        print()
+        explain_block(args[0], force_error=True)
+        return
+    else:
+        print(&quot;\nViva example&quot;)
+        explain_block(&quot;1011&quot;, force_error=True)
+        path = Path(__file__).with_name(&quot;exp2_sample.txt&quot;)
+
+    if not path.exists():
+        print(f&quot;\nFile not found: {path}&quot;)
+        return
+
+    raw = path.read_bytes()
+    print(f&quot;\nFile: {path} ({len(raw)} bytes)&quot;)
+    print(&quot;About 1 in 20 blocks is given a single-bit error, then corrected.&quot;)
+    results = {}
+    for size in (16, 32):
+        print(f&quot;\nFrame size {size}&quot;)
+        results[size] = process_file(raw, size)
+
+    print(&quot;\nFrame Size | Total Blocks | Blocks with Error | Corrections&quot;)
+    for size in (16, 32):
+        total, errors, corrections = results[size]
+        print(f&quot;{size:&lt;10} | {total:&lt;12} | {errors:&lt;17} | {corrections}&quot;)
+
+
+if __name__ == &quot;__main__&quot;:
+    main()</pre>
+  <h3 id="e4-viva">Viva</h3>
+  <details><summary>Why powers of two?</summary><p>Each data bit then falls into a unique combination of parity checks, so the pattern of failed checks is the binary address of the bad bit.</p></details>
+  <details><summary>Even or odd parity?</summary><p>This program uses even parity. The check XOR, including the parity bit, is 0 when the bits are correct.</p></details>
+  <details><summary>Does it fix a burst of errors?</summary><p>No. A second error moves the syndrome off the real positions.</p></details>
+  <h3 id="e4-run">Run</h3>
+  <p class="run">python exp4_hamming.py 1011</p>
+</article>
+
+<article data-panel="e5" hidden>
+  <p class="kicker">Experiment 5 · Data link</p>
+  <h1>CRC</h1>
+  <p class="aim">Detect errors by appending the remainder of a modulo-2 division by a generator polynomial.</p>
+  <h3 id="e5-idea">Sender and receiver</h3>
+  <ol>
+    <li>Generator of length k corresponds to a polynomial. Example: x<sup>3</sup> + x<sup>2</sup> + 1 = <code>1101</code>.</li>
+    <li>Append k−1 zeros to the message.</li>
+    <li>Divide with XOR instead of subtraction. The remainder has k−1 bits.</li>
+    <li>Send message + remainder. The receiver divides the whole word by the same generator and appends no extra zeros.</li>
+    <li>Remainder 0 means no detected error. Any other remainder means the word is damaged. CRC does not tell you which bit to flip.</li>
+  </ol>
+  <div class="say"><strong>Say this.</strong> The aim sheet says “detection and correction”, but the method you implemented only detects. Correction would need a retransmission or a different code, such as Hamming.</div>
+  <h3 id="e5-numbers">Numbers from the program</h3>
+  <div class="wrap"><table>
+    <tr><th>Case</th><th>Message</th><th>Generator</th><th>Remainder</th><th>Sent</th></tr>
+    <tr><td>No error</td><td><code>100100</code></td><td><code>1101</code></td><td><code>001</code></td><td><code>100100001</code></td></tr>
+    <tr><td>Bit flipped</td><td>same</td><td>same</td><td>check <code>011</code></td><td>received <code>100000001</code> → Invalid</td></tr>
+    <tr><td>Obs. 1</td><td><code>1010001101</code></td><td>x<sup>5</sup>+x<sup>4</sup>+x<sup>2</sup>+1 = <code>110101</code></td><td><code>01110</code></td><td><code>101000110101110</code></td></tr>
+    <tr><td>Obs. 2</td><td><code>10011011100</code></td><td>x<sup>4</sup>+x<sup>2</sup>+1 = <code>10101</code></td><td><code>1100</code></td><td><code>100110111001100</code></td></tr>
+    <tr><td>Obs. 3</td><td><code>1101101010101101</code></td><td>x<sup>5</sup>+x<sup>2</sup>+1 = <code>100101</code></td><td><code>11100</code></td><td><code>110110101010110111100</code></td></tr>
+  </table></div>
+  <p>A text or image file is split into 32-bit blocks and the same CRC is applied. The first block is corrupted on purpose so the check prints Invalid.</p>
+  <h3 id="e5-code">Code to point at</h3>
+  <pre>register = data + "0" * (len(generator) - 1)
+if register[i] == "1":
+    XOR generator over the next k bits
+remainder = last k-1 bits</pre>
+  <h3 id="e5-src">The code</h3>
+  <p class="filetag">exp5_crc.py — Appends a CRC remainder, then checks a received word. Remainder 0 means no detected error.</p>
+  <p class="why"><strong>Top of the file</strong> — No constants. The generator is the polynomial written in bits, such as 1101 for x^3 + x^2 + 1.</p>
+  <pre>&quot;&quot;&quot;Experiment 5: CRC error detection.
+
+Sender appends the modulo-2 remainder. Receiver divides again.
+Remainder 0 means no detected error.
+
+Run:
+  python exp5_crc.py
+  python exp5_crc.py --ask
+  python exp5_crc.py --file exp2_sample.txt
+  python exp5_crc.py --image some.png
+&quot;&quot;&quot;
+
+from __future__ import annotations
+
+import sys
+from pathlib import Path</pre>
+  <p class="why"><strong>xor_div</strong> — Sender step. Stick k−1 zeros on the message and divide by the generator using XOR, not subtraction. The last k−1 bits are the remainder.</p>
+  <pre>def xor_div(data: str, generator: str) -&gt; str:
+    &quot;&quot;&quot;Modulo-2 division. Returns the remainder of length len(generator) - 1.&quot;&quot;&quot;
+    if not generator or generator[0] != &quot;1&quot;:
+        raise ValueError(&quot;generator must be a binary string starting with 1&quot;)
+    if any(bit not in &quot;01&quot; for bit in data + generator):
+        raise ValueError(&quot;data and generator must be binary&quot;)
+    width = len(generator)
+    register = list(data + &quot;0&quot; * (width - 1))
+    for i in range(len(register) - width + 1):
+        if register[i] != &quot;1&quot;:
+            continue
+        for j in range(width):
+            register[i + j] = &quot;0&quot; if register[i + j] == generator[j] else &quot;1&quot;
+    return &quot;&quot;.join(register[-(width - 1) :])</pre>
+  <p class="why"><strong>check</strong> — Receiver step. Divide the received word by the same generator. Do not add extra zeros.</p>
+  <pre>def check(received: str, generator: str) -&gt; str:
+    &quot;&quot;&quot;Divide an already-encoded word. Do not append extra zeros.&quot;&quot;&quot;
+    width = len(generator)
+    register = list(received)
+    if len(register) &lt; width:
+        return received.zfill(width - 1)
+    for i in range(len(register) - width + 1):
+        if register[i] != &quot;1&quot;:
+            continue
+        for j in range(width):
+            register[i + j] = &quot;0&quot; if register[i + j] == generator[j] else &quot;1&quot;
+    return &quot;&quot;.join(register[-(width - 1) :])</pre>
+  <p class="why"><strong>encode</strong> — What is sent: the original message with the remainder stuck on the end.</p>
+  <pre>def encode(message: str, generator: str) -&gt; tuple[str, str]:
+    remainder = xor_div(message, generator)
+    return remainder, message + remainder</pre>
+  <p class="why"><strong>report</strong> — Prints the remainder, the sent word, and Valid or Invalid.</p>
+  <pre>def report(message: str, generator: str, received: str | None = None) -&gt; None:
+    remainder, sent = encode(message, generator)
+    print(f&quot;Message     : {message}&quot;)
+    print(f&quot;Generator   : {generator}&quot;)
+    print(f&quot;Remainder   : {remainder}&quot;)
+    print(f&quot;Sent data   : {sent}&quot;)
+    word = received if received is not None else sent
+    syndrome = check(word, generator)
+    print(f&quot;Received    : {word}&quot;)
+    print(f&quot;Check rem.  : {syndrome}&quot;)
+    print(&quot;Result      :&quot;, &quot;Valid&quot; if int(syndrome, 2) == 0 else &quot;Invalid&quot;)</pre>
+  <p class="why"><strong>flip</strong> — Flips one bit so a good codeword becomes a bad one.</p>
+  <pre>def flip(word: str, index: int) -&gt; str:
+    bits = list(word)
+    bits[index] = &quot;1&quot; if bits[index] == &quot;0&quot; else &quot;0&quot;
+    return &quot;&quot;.join(bits)</pre>
+  <p class="why"><strong>file_crc</strong> — CRC on 32-bit blocks of a file. The first block is corrupted on purpose so the check prints Invalid.</p>
+  <pre>def file_crc(path: Path, generator: str = &quot;110101&quot;) -&gt; None:
+    raw = path.read_bytes()
+    bits = &quot;&quot;.join(format(byte, &quot;08b&quot;) for byte in raw)
+    block = 32
+    padding = (block - len(bits) % block) % block
+    bits += &quot;0&quot; * padding
+    print(f&quot;\nFile: {path}&quot;)
+    print(f&quot;Bits: {len(bits)}   block: {block}   generator: {generator}&quot;)
+    bad = 0
+    shown = 0
+    blocks = len(bits) // block
+    for n in range(blocks):
+        payload = bits[n * block : (n + 1) * block]
+        remainder, sent = encode(payload, generator)
+        received = sent
+        # Corrupt the first block so the check is visible.
+        if n == 0:
+            received = flip(sent, 3)
+        syndrome = check(received, generator)
+        ok = int(syndrome, 2) == 0
+        if not ok:
+            bad += 1
+        if shown &lt; 2:
+            print(f&quot;Block {n}: remainder {remainder}  check {syndrome}  {&#x27;Valid&#x27; if ok else &#x27;Invalid&#x27;}&quot;)
+            shown += 1
+    if blocks &gt; shown:
+        print(f&quot;... {blocks - shown} more blocks&quot;)
+    print(f&quot;Blocks with a detected error: {bad} of {blocks}&quot;)</pre>
+  <p class="why"><strong>interactive</strong> — The prompt from the sheet: type a message and a generator.</p>
+  <pre>def interactive() -&gt; None:
+    message = input(&quot;Enter message: &quot;).strip()
+    generator = input(&quot;Enter generator: &quot;).strip()
+    remainder, sent = encode(message, generator)
+    print(&quot;Remainder:&quot;, remainder)
+    print(&quot;Sent data:&quot;, sent)
+    received = input(&quot;Enter received data (blank = sent data): &quot;).strip() or sent
+    syndrome = check(received, generator)
+    print(&quot;Check remainder:&quot;, syndrome)
+    print(&quot;Valid&quot; if int(syndrome, 2) == 0 else &quot;Invalid&quot;)</pre>
+  <p class="why"><strong>main</strong> — Runs the textbook example, the three observation questions, then the sample file.</p>
+  <pre>def main() -&gt; None:
+    print(&quot;Experiment 5: CRC&quot;)
+    if &quot;--ask&quot; in sys.argv:
+        interactive()
+        return
+
+    print(&quot;\nCase 1: no error&quot;)
+    print(&quot;Data = 100100, key = x^3 + x^2 + 1 = 1101&quot;)
+    report(&quot;100100&quot;, &quot;1101&quot;)
+
+    print(&quot;\nCase 2: error in transmission&quot;)
+    report(&quot;100100&quot;, &quot;1101&quot;, received=&quot;100000001&quot;)
+
+    print(&quot;\nObservation 1&quot;)
+    print(&quot;M = 1010001101, divisor x^5 + x^4 + x^2 + 1 = 110101&quot;)
+    report(&quot;1010001101&quot;, &quot;110101&quot;)
+
+    print(&quot;\nObservation 2&quot;)
+    print(&quot;Data = 10011011100, polynomial x^4 + x^2 + 1 = 10101&quot;)
+    report(&quot;10011011100&quot;, &quot;10101&quot;)
+
+    print(&quot;\nObservation 3&quot;)
+    print(&quot;Data = 1101101010101101, polynomial x^5 + x^2 + 1 = 100101&quot;)
+    report(&quot;1101101010101101&quot;, &quot;100101&quot;)
+
+    file_arg = None
+    image_arg = None
+    args = sys.argv[1:]
+    for i, arg in enumerate(args):
+        if arg == &quot;--file&quot; and i + 1 &lt; len(args):
+            file_arg = Path(args[i + 1])
+        if arg == &quot;--image&quot; and i + 1 &lt; len(args):
+            image_arg = Path(args[i + 1])
+
+    sample = Path(__file__).with_name(&quot;exp2_sample.txt&quot;)
+    file_crc(file_arg or sample)
+    if image_arg:
+        print(&quot;\nImage as raw bytes, same CRC:&quot;)
+        file_crc(image_arg)
+
+
+if __name__ == &quot;__main__&quot;:
+    main()</pre>
+  <h3 id="e5-viva">Viva</h3>
+  <details><summary>Why XOR?</summary><p>Modulo-2 arithmetic has no carry. Addition and subtraction are the same operation, which is XOR.</p></details>
+  <details><summary>Why can a clever error still pass?</summary><p>If the error pattern is a multiple of the generator, the remainder is still 0. A good generator makes that rare for short bursts.</p></details>
+  <details><summary>Where is the CRC usually placed?</summary><p>In the trailer, after the payload, because the remainder is computed over the data that precedes it.</p></details>
+  <h3 id="e5-run">Run</h3>
+  <p class="run">python exp5_crc.py</p>
+</article>
+
+<article data-panel="e6" hidden>
+  <p class="kicker">Experiment 6 · Network</p>
+  <h1>VLSM</h1>
+  <p class="aim">Split 192.168.1.0/24 into subnets of different sizes so the three LANs and three WAN links all fit.</p>
+  <h3 id="e6-idea">Rule</h3>
+  <p>Fixed-length masks waste addresses: every subnet is as big as the largest one. VLSM gives each group its own mask. Allocate the largest requirement first, from the start of the block. Each subnet needs hosts + 2 addresses (network id and broadcast). Pick the smallest power of two that covers that, then prefix = 32 − log<sub>2</sub>(size).</p>
+  <div class="wrap"><table>
+    <tr><th>Hosts needed</th><th>Addresses</th><th>Mask</th></tr>
+    <tr><td>74</td><td>128</td><td>/25 &nbsp; 255.255.255.128</td></tr>
+    <tr><td>52</td><td>64</td><td>/26 &nbsp; 255.255.255.192</td></tr>
+    <tr><td>28</td><td>32</td><td>/27 &nbsp; 255.255.255.224</td></tr>
+    <tr><td>2 (a WAN link)</td><td>4</td><td>/30 &nbsp; 255.255.255.252</td></tr>
+  </table></div>
+  <h3 id="e6-lab">Lab answer · 192.168.1.0/24</h3>
+  <div class="wrap"><table>
+    <tr><th>Name</th><th>Network</th><th>First host</th><th>Last host</th><th>Broadcast</th></tr>
+    <tr><td>Development (74)</td><td>192.168.1.0/25</td><td>.1</td><td>.126</td><td>.127</td></tr>
+    <tr><td>Production (52)</td><td>192.168.1.128/26</td><td>.129</td><td>.190</td><td>.191</td></tr>
+    <tr><td>Admin (28)</td><td>192.168.1.192/27</td><td>.193</td><td>.222</td><td>.223</td></tr>
+    <tr><td>WAN 1</td><td>192.168.1.224/30</td><td>.225</td><td>.226</td><td>.227</td></tr>
+    <tr><td>WAN 2</td><td>192.168.1.228/30</td><td>.229</td><td>.230</td><td>.231</td></tr>
+    <tr><td>WAN 3</td><td>192.168.1.232/30</td><td>.233</td><td>.234</td><td>.235</td></tr>
+  </table></div>
+  <p>20 addresses, .236 to .255, stay unused.</p>
+  <h3 id="e6-obs">Observation · 192.168.10.0/24</h3>
+  <div class="wrap"><table>
+    <tr><th>Dept</th><th>Hosts</th><th>Subnet</th><th>Usable</th><th>Broadcast</th></tr>
+    <tr><td>HR</td><td>50</td><td>192.168.10.0/26</td><td>.1 – .62</td><td>.63</td></tr>
+    <tr><td>Finance</td><td>25</td><td>192.168.10.64/27</td><td>.65 – .94</td><td>.95</td></tr>
+    <tr><td>IT</td><td>12</td><td>192.168.10.96/28</td><td>.97 – .110</td><td>.111</td></tr>
+    <tr><td>Admin</td><td>6</td><td>192.168.10.112/29</td><td>.113 – .118</td><td>.119</td></tr>
+  </table></div>
+  <p>136 addresses from .120 onward are unused. Admin needs exactly 8 addresses (6 hosts + network + broadcast), so /29 fits with no spare host.</p>
+  <h3 id="e6-src">The code</h3>
+  <p class="filetag">exp6_vlsm.py — Designs the VLSM tables: largest network first, from the given address block.</p>
+  <p class="why"><strong>Top of the file</strong> — Uses the standard library IP module so the network, first host, last host, and broadcast are real addresses.</p>
+  <pre>&quot;&quot;&quot;Experiment 6: VLSM subnet design.
+
+Largest network is allocated first from the given block.
+Each subnet reserves two addresses: network id and broadcast.
+
+Run: python exp6_vlsm.py
+&quot;&quot;&quot;
+
+from __future__ import annotations
+
+import ipaddress</pre>
+  <p class="why"><strong>prefix_for_hosts</strong> — A subnet needs hosts + 2 addresses (network id and broadcast). Round that up to a power of two. Prefix = 32 − log2(size).</p>
+  <pre>def prefix_for_hosts(hosts: int) -&gt; int:
+    if hosts &lt; 1:
+        raise ValueError(&quot;each network needs at least 1 host&quot;)
+    needed = hosts + 2
+    size = 1
+    while size &lt; needed:
+        size *= 2
+    return 32 - (size.bit_length() - 1)</pre>
+  <p class="why"><strong>design</strong> — Sorts requirements largest first and walks forward through the block. A /25 must start on a 128-address boundary, which is why the big one goes first.</p>
+  <pre>def design(base: str, requirements: list[tuple[str, int]]) -&gt; tuple[list[dict], int, str]:
+    network = ipaddress.ip_network(base, strict=False)
+    ordered = sorted(requirements, key=lambda item: item[1], reverse=True)
+    cursor = int(network.network_address)
+    end = int(network.broadcast_address)
+    rows = []
+    for name, hosts in ordered:
+        prefix = prefix_for_hosts(hosts)
+        size = 2 ** (32 - prefix)
+        if cursor + size - 1 &gt; end:
+            raise ValueError(f&quot;{name} does not fit in {network}&quot;)
+        # Largest-first allocation stays aligned when the block itself is aligned.
+        subnet = ipaddress.ip_network((cursor, prefix), strict=False)
+        hosts_iter = subnet.hosts()
+        first = next(hosts_iter)
+        last = first
+        for last in subnet.hosts():
+            pass
+        rows.append(
+            {
+                &quot;name&quot;: name,
+                &quot;hosts&quot;: hosts,
+                &quot;cidr&quot;: f&quot;{subnet.network_address}/{prefix}&quot;,
+                &quot;network&quot;: str(subnet.network_address),
+                &quot;first&quot;: str(first),
+                &quot;last&quot;: str(last),
+                &quot;broadcast&quot;: str(subnet.broadcast_address),
+                &quot;mask&quot;: str(subnet.netmask),
+                &quot;prefix&quot;: prefix,
+                &quot;size&quot;: size,
+            }
+        )
+        cursor += size
+    unused = end - cursor + 1
+    return rows, unused, str(network)</pre>
+  <p class="why"><strong>print_table</strong> — Prints the sheet you copy into the observation: need, CIDR, first host, last host, broadcast, mask.</p>
+  <pre>def print_table(title: str, base: str, requirements: list[tuple[str, int]]) -&gt; None:
+    rows, unused, network = design(base, requirements)
+    print(&quot;\n&quot; + title)
+    print(f&quot;Address block: {network}&quot;)
+    print(
+        f&quot;{&#x27;Name&#x27;:&lt;28} {&#x27;Need&#x27;:&gt;5} {&#x27;CIDR&#x27;:&lt;18} {&#x27;First host&#x27;:&lt;16} &quot;
+        f&quot;{&#x27;Last host&#x27;:&lt;16} {&#x27;Broadcast&#x27;:&lt;16} {&#x27;Mask&#x27;}&quot;
+    )
+    for row in rows:
+        print(
+            f&quot;{row[&#x27;name&#x27;]:&lt;28} {row[&#x27;hosts&#x27;]:&gt;5} {row[&#x27;cidr&#x27;]:&lt;18} {row[&#x27;first&#x27;]:&lt;16} &quot;
+            f&quot;{row[&#x27;last&#x27;]:&lt;16} {row[&#x27;broadcast&#x27;]:&lt;16} {row[&#x27;mask&#x27;]}&quot;
+        )
+    print(f&quot;Unused addresses: {unused}&quot;)</pre>
+  <p class="why"><strong>ask_custom</strong> — Lets you type your own block and a list of name, hosts.</p>
+  <pre>def ask_custom() -&gt; None:
+    base = input(&quot;Base block (example 192.168.1.0/24): &quot;).strip()
+    print(&quot;Enter networks as: name, hosts&quot;)
+    print(&quot;Blank line finishes the list.&quot;)
+    requirements = []
+    while True:
+        line = input(&quot;&gt; &quot;).strip()
+        if not line:
+            break
+        name, hosts = line.split(&quot;,&quot;)
+        requirements.append((name.strip(), int(hosts.strip())))
+    if not requirements:
+        print(&quot;No networks entered.&quot;)
+        return
+    print_table(&quot;Custom VLSM&quot;, base, requirements)</pre>
+  <p class="why"><strong>main</strong> — Prints the company problem (192.168.1.0/24) and the observation (192.168.10.0/24).</p>
+  <pre>def main() -&gt; None:
+    print(&quot;Experiment 6: Variable Length Subnet Masking&quot;)
+    lab = [
+        (&quot;Development LAN&quot;, 74),
+        (&quot;Production LAN&quot;, 52),
+        (&quot;Administrative LAN&quot;, 28),
+        (&quot;WAN link 1&quot;, 2),
+        (&quot;WAN link 2&quot;, 2),
+        (&quot;WAN link 3&quot;, 2),
+    ]
+    observation = [
+        (&quot;HR&quot;, 50),
+        (&quot;Finance&quot;, 25),
+        (&quot;IT&quot;, 12),
+        (&quot;Admin&quot;, 6),
+    ]
+    print_table(&quot;Lab problem: 192.168.1.0/24&quot;, &quot;192.168.1.0/24&quot;, lab)
+    print_table(&quot;Observation: 192.168.10.0/24&quot;, &quot;192.168.10.0/24&quot;, observation)
+
+    print(&quot;\n1. Show the two solved problems again&quot;)
+    print(&quot;2. Design a custom block&quot;)
+    print(&quot;3. Exit&quot;)
+    try:
+        choice = input(&quot;Enter: &quot;).strip()
+    except EOFError:
+        return
+    if choice == &quot;2&quot;:
+        ask_custom()
+
+
+if __name__ == &quot;__main__&quot;:
+    main()</pre>
+  <h3 id="e6-viva">Viva</h3>
+  <details><summary>Why largest first?</summary><p>A /25 must start on a 128-address boundary. If you place a small subnet first, the next address may not be aligned for the big one, and the big block will not fit.</p></details>
+  <details><summary>Why /30 for a WAN link?</summary><p>A point-to-point link needs two host addresses. /30 has exactly four addresses: network, two hosts, broadcast.</p></details>
+  <details><summary>What did Packet Tracer add?</summary><p>Static routes so each department’s router knows the other subnets, then ping across a WAN link to prove it.</p></details>
+  <h3 id="e6-run">Run</h3>
+  <p class="run">python exp6_vlsm.py</p>
+</article>
+
+<article data-panel="e7" hidden>
+  <p class="kicker">Experiment 7 · All layers</p>
+  <h1>Wireshark</h1>
+  <p class="aim">Capture one exchange and name the header fields at each TCP/IP layer.</p>
+  <h3 id="e7-steps">Capture</h3>
+  <ol>
+    <li>Start a capture on the active Wi-Fi or Ethernet interface.</li>
+    <li>Open <code>http://example.com</code>. In a terminal: <code>ping -n 4 8.8.8.8</code> and <code>nslookup google.com</code>.</li>
+    <li>Stop. Paste one display filter at a time. Click a row and expand the middle pane.</li>
+    <li>On an HTTP packet: right-click → Follow → TCP Stream. You should see the GET and the response.</li>
+  </ol>
+  <h3 id="e7-layers">What to point at</h3>
+  <div class="wrap"><table>
+    <tr><th>Layer</th><th>Filter</th><th>Fields</th></tr>
+    <tr><td>Ethernet</td><td><code>eth</code></td><td>Source and destination MAC. EtherType 0x0800 is IPv4, 0x0806 is ARP. Frame length.</td></tr>
+    <tr><td>ARP</td><td><code>arp</code></td><td>Opcode 1 request, 2 reply. Sender IP/MAC and target IP/MAC.</td></tr>
+    <tr><td>IP</td><td><code>ip</code></td><td>Version, header length, total length, TTL, protocol, source and destination. Flags and fragment offset if the packet was split.</td></tr>
+    <tr><td>ICMP</td><td><code>icmp</code></td><td>Type 8 echo request, type 0 echo reply, type 3 destination unreachable.</td></tr>
+    <tr><td>TCP</td><td><code>tcp</code></td><td>Ports, sequence, acknowledgement, SYN / ACK / FIN. Handshake: <code>tcp.flags.syn == 1</code>.</td></tr>
+    <tr><td>UDP</td><td><code>udp</code></td><td>Ports, length, checksum. DNS is port 53. DHCP is ports 67 and 68.</td></tr>
+    <tr><td>Application</td><td><code>http</code> <code>dns</code> <code>dhcp</code> <code>tls</code></td><td>HTTP method, Host, status code. DNS question and answer. DHCP DORA: discover, offer, request, ack.</td></tr>
+  </table></div>
+  <h3 id="e7-stack">Encapsulation, bottom to top on the wire</h3>
+  <p>Application data sits inside a TCP or UDP header, inside an IP header, inside an Ethernet header and trailer. Wireshark peels them in that order from the outside.</p>
+  <div class="say"><strong>Say this.</strong> Follow TCP Stream rebuilds the bytes in order, so you read the conversation instead of one segment at a time. A display filter only hides rows; it does not delete them from the capture.</div>
+  <h3 id="e7-src">The code</h3>
+  <p class="filetag">exp7_wireshark.py — Does not capture packets. It prints the Wireshark filters and the header fields to point at.</p>
+  <p class="why"><strong>Top of the file</strong> — LAYERS is the revision list: filter, then the fields. STEPS is the capture order.</p>
+  <pre>&quot;&quot;&quot;Experiment 7: Wireshark and the TCP/IP layers.
+
+This experiment is done in Wireshark, not as a compiled program.
+Run this file for the capture steps, display filters, and the header
+fields to point at if you are asked to explain a packet.
+
+Run: python exp7_wireshark.py
+&quot;&quot;&quot;
+
+from __future__ import annotations
+
+LAYERS = [
+    (
+        &quot;Ethernet&quot;,
+        &quot;eth&quot;,
+        [
+            &quot;Destination and source MAC addresses (6 bytes each)&quot;,
+            &quot;EtherType: 0x0800 IPv4, 0x0806 ARP, 0x86DD IPv6&quot;,
+            &quot;Frame length, shown in the frame header&quot;,
+        ],
+    ),
+    (
+        &quot;Data link / ARP&quot;,
+        &quot;arp&quot;,
+        [
+            &quot;Opcode 1 = request, opcode 2 = reply&quot;,
+            &quot;Sender MAC and sender IP&quot;,
+            &quot;Target MAC and target IP&quot;,
+            &quot;This is the IP-to-MAC binding&quot;,
+        ],
+    ),
+    (
+        &quot;Network / IP&quot;,
+        &quot;ip&quot;,
+        [
+            &quot;Version, header length, total length, TTL, protocol&quot;,
+            &quot;Source and destination IP addresses&quot;,
+            &quot;Identification, flags, fragment offset (fragmentation)&quot;,
+            &quot;Protocol 1 = ICMP, 6 = TCP, 17 = UDP&quot;,
+        ],
+    ),
+    (
+        &quot;ICMP&quot;,
+        &quot;icmp&quot;,
+        [
+            &quot;Type 8 / code 0 = echo request (ping)&quot;,
+            &quot;Type 0 / code 0 = echo reply&quot;,
+            &quot;Type 3 = destination unreachable&quot;,
+        ],
+    ),
+    (
+        &quot;Transport / TCP&quot;,
+        &quot;tcp&quot;,
+        [
+            &quot;Source and destination ports&quot;,
+            &quot;Sequence number and acknowledgement number&quot;,
+            &quot;Flags: SYN, ACK, FIN, RST&quot;,
+            &quot;Handshake filter: tcp.flags.syn == 1&quot;,
+            &quot;HTTP port filter: tcp.port == 80&quot;,
+        ],
+    ),
+    (
+        &quot;UDP&quot;,
+        &quot;udp&quot;,
+        [
+            &quot;Source and destination ports, length, checksum&quot;,
+            &quot;DNS uses UDP port 53: dns  or  udp.port == 53&quot;,
+            &quot;DHCP uses UDP ports 67 and 68: dhcp&quot;,
+        ],
+    ),
+    (
+        &quot;Application&quot;,
+        &quot;http or dns or dhcp or ftp or tls&quot;,
+        [
+            &quot;HTTP: request method, URL, Host, status code (http)&quot;,
+            &quot;Follow a TCP stream: right-click a packet -&gt; Follow -&gt; TCP Stream&quot;,
+            &quot;DNS: query name and the answer address (dns)&quot;,
+            &quot;DHCP: discover, offer, request, ack (dhcp)&quot;,
+            &quot;FTP: commands on port 21 (ftp)&quot;,
+            &quot;TLS: handshake after the TCP connection (tls)&quot;,
+        ],
+    ),
+]
+
+STEPS = &quot;&quot;&quot;
+Capture steps
+1. Open Wireshark and start a capture on the active Wi-Fi or Ethernet interface.
+2. In a browser, open http://example.com  (plain HTTP shows the request clearly).
+3. In a terminal run:  ping -n 4 8.8.8.8     and     nslookup google.com
+4. Stop the capture.
+5. Paste one display filter at a time into the filter bar and press Enter.
+6. Click a packet. In the middle pane expand Ethernet II, Internet Protocol,
+   and Transmission Control Protocol (or UDP).
+7. For an HTTP packet: right-click -&gt; Follow -&gt; TCP Stream.
+   You should see the GET request and the HTTP response.
+&quot;&quot;&quot;</pre>
+  <p class="why"><strong>main</strong> — Prints the steps, then one block per layer.</p>
+  <pre>def main() -&gt; None:
+    print(&quot;Experiment 7: Wireshark — TCP/IP layers&quot;)
+    print(STEPS)
+    print(&quot;Display filters and what to say about each layer&quot;)
+    for name, filt, points in LAYERS:
+        print(&quot;=&quot; * 72)
+        print(f&quot;{name}&quot;)
+        print(f&quot;Filter: {filt}&quot;)
+        for point in points:
+            print(f&quot;  - {point}&quot;)
+        print()
+    print(&quot;Useful extra filters&quot;)
+    print(&quot;  tcp.flags.syn == 1 &amp;&amp; tcp.flags.ack == 0    first packet of the handshake&quot;)
+    print(&quot;  tcp.flags.syn == 1 &amp;&amp; tcp.flags.ack == 1    SYN-ACK&quot;)
+    print(&quot;  icmp.type == 8                              echo request&quot;)
+    print(&quot;  icmp.type == 3                              destination unreachable&quot;)
+    print(&quot;  http.request.method == GET                  HTTP GET only&quot;)
+    print(&quot;  dns.flags.response == 0                     DNS queries&quot;)
+    print(&quot;  dns.flags.response == 1                     DNS responses&quot;)
+
+
+if __name__ == &quot;__main__&quot;:
+    main()</pre>
+  <h3 id="e7-viva">Viva</h3>
+  <details><summary>Which protocols are in a web page load?</summary><p>DNS (UDP/53) to resolve the name, TCP handshake to port 80 or 443, then HTTP or TLS. ARP appears if the gateway’s MAC is not cached.</p></details>
+  <details><summary>SYN versus SYN-ACK?</summary><p><code>tcp.flags.syn == 1 &amp;&amp; tcp.flags.ack == 0</code> is the first handshake packet. Both flags set is the server’s reply.</p></details>
+  <details><summary>Why might HTTP be missing?</summary><p>Modern sites use TLS on port 443. Filter <code>tls</code>. The GET is encrypted, so Follow TCP Stream will not show plain text.</p></details>
+  <h3 id="e7-run">Run</h3>
+  <p class="run">python exp7_wireshark.py</p>
+  <p>That script only prints the filters. The capture itself is done in Wireshark.</p>
+</article>
+
+<article data-panel="e8" hidden>
+  <p class="kicker">Experiment 8 · Transport</p>
+  <h1>TCP sockets and selection sort</h1>
+  <p class="aim">Two clients each send an integer array. The server sorts each array, then sorts the merged array, and sends both results back.</p>
+  <h3 id="e8-idea">Why TCP</h3>
+  <ul>
+    <li>Connection-oriented: <code>connect</code> does a three-way handshake before any array is sent.</li>
+    <li>Reliable byte stream: <code>sendall</code> / <code>recv</code> deliver the bytes in order. The program still frames messages with a newline because TCP does not preserve your “one send = one recv”.</li>
+    <li>Server listens on <code>0.0.0.0:8000</code>, so it accepts clients on this machine at 127.0.0.1.</li>
+  </ul>
+  <h3 id="e8-steps">Order of messages</h3>
+  <ol>
+    <li>Client sends a JSON list, for example <code>[5, 1, 4]</code>, followed by <code>\n</code>.</li>
+    <li>Server stores it and waits until both clients have sent.</li>
+    <li>Case 1: selection-sort a copy of that client’s array. Send <code>{"case": 1, "individual_sorted": [...]}</code>.</li>
+    <li>Case 2: one thread merges client 1’s list with client 2’s list, selection-sorts it, and both clients receive <code>merged_sorted</code>.</li>
+  </ol>
+  <h3 id="e8-sort">Selection sort, one pass</h3>
+  <p>For index i, assume <code>arr[i]</code> is the minimum. Scan the rest. If a smaller value is found, remember its index. Swap it with <code>arr[i]</code> if the index changed. After pass i, the first i+1 items are in their final place. The server prints every comparison so you can narrate a pass.</p>
+  <p>Example: <code>[5, 1, 4]</code> → pass 1 swaps 5 and 1 → <code>[1, 5, 4]</code> → pass 2 swaps 5 and 4 → <code>[1, 4, 5]</code>.</p>
+  <h3 id="e8-code">Code to point at</h3>
+  <pre>socket.socket(AF_INET, SOCK_STREAM)
+bind(("0.0.0.0", 8000)); listen(2)
+accept()  # once per client, each in a thread
+if arr[j] &lt; arr[min_index]:
+    min_index = j
+arr[i], arr[min_index] = arr[min_index], arr[i]</pre>
+  <h3 id="e8-src">The code</h3>
+  <p class="filetag">exp8_tcp_sort_server.py — TCP server. Two clients each send an array. The server selection-sorts each one, then the merged list.</p>
+  <p class="why"><strong>Top of the file</strong> — Listens on every interface, port 8000. The lock keeps the two client threads from mixing their prints.</p>
+  <pre>&quot;&quot;&quot;Experiment 8: TCP server. Two clients each send an integer array.
+
+Case 1: selection-sort that client&#x27;s array and send it back.
+Case 2: merge both arrays, selection-sort the merge, send it to both.
+
+Run the server first:
+  python exp8_tcp_sort_server.py
+Then in two other terminals:
+  python exp8_tcp_sort_client.py 1
+  python exp8_tcp_sort_client.py 2
+&quot;&quot;&quot;
+
+from __future__ import annotations
+
+import json
+import socket
+import threading
+
+HOST = &quot;0.0.0.0&quot;
+PORT = 8000
+
+client_arrays: dict[int, list[int]] = {}
+merged_sorted: list[int] | None = None
+lock = threading.Lock()
+print_lock = threading.Lock()
+both_received = threading.Event()</pre>
+  <p class="why"><strong>LineReader</strong> — TCP is a byte stream. One recv can contain both JSON replies, or only half of one. This reads until a newline, which is the message boundary.</p>
+  <pre>class LineReader:
+    def __init__(self, sock: socket.socket) -&gt; None:
+        self.sock = sock
+        self.buffer = b&quot;&quot;
+
+    def read_json(self):
+        while b&quot;\n&quot; not in self.buffer:
+            chunk = self.sock.recv(4096)
+            if not chunk:
+                return None
+            self.buffer += chunk
+        line, self.buffer = self.buffer.split(b&quot;\n&quot;, 1)
+        if not line:
+            return None
+        return json.loads(line.decode())</pre>
+  <p class="why"><strong>send_json</strong> — Sends one JSON object and a newline, so the client can find the end.</p>
+  <pre>def send_json(sock: socket.socket, payload: dict) -&gt; None:
+    sock.sendall((json.dumps(payload) + &quot;\n&quot;).encode())</pre>
+  <p class="why"><strong>selection_sort</strong> — Pass i finds the smallest value from index i to the end and swaps it into index i. Every comparison is printed so you can narrate a pass.</p>
+  <pre>def selection_sort(arr: list[int], name: str) -&gt; list[int]:
+    lines = [f&quot;\n{&#x27;=&#x27; * 60}&quot;, f&quot;SELECTION SORT: {name}&quot;, &quot;=&quot; * 60, f&quot;Original Array: {arr}&quot;]
+    n = len(arr)
+    for i in range(n - 1):
+        min_index = i
+        lines.append(f&quot;\nPASS {i + 1}&quot;)
+        lines.append(f&quot;Starting Array: {arr}&quot;)
+        lines.append(f&quot;Assume minimum = {arr[min_index]} at index {min_index}&quot;)
+        for j in range(i + 1, n):
+            lines.append(f&quot;Compare {arr[j]} with {arr[min_index]}&quot;)
+            if arr[j] &lt; arr[min_index]:
+                min_index = j
+                lines.append(f&quot;New minimum found: {arr[min_index]} at index {min_index}&quot;)
+        if min_index != i:
+            lines.append(f&quot;Swap {arr[i]} and {arr[min_index]}&quot;)
+            arr[i], arr[min_index] = arr[min_index], arr[i]
+        else:
+            lines.append(&quot;No swap required.&quot;)
+        lines.append(f&quot;Array after Pass {i + 1}: {arr}&quot;)
+    lines.append(f&quot;\nFinal Sorted Array: {arr}&quot;)
+    with print_lock:
+        print(&quot;\n&quot;.join(lines))
+    return arr</pre>
+  <p class="why"><strong>handle_client</strong> — Stores this client&#x27;s array, waits until both have arrived, sends the individual sort, then the merged sort. The merge is sorted only once.</p>
+  <pre>def handle_client(client_socket: socket.socket, address, client_number: int) -&gt; None:
+    global merged_sorted
+    reader = LineReader(client_socket)
+    try:
+        array = reader.read_json()
+        if not isinstance(array, list):
+            print(f&quot;Client {client_number} sent no array.&quot;)
+            return
+        array = [int(x) for x in array]
+        print(f&quot;\nClient {client_number} connected from {address}&quot;)
+        print(f&quot;Array received: {array}&quot;)
+
+        with lock:
+            client_arrays[client_number] = array
+            if len(client_arrays) == 2:
+                both_received.set()
+
+        print(f&quot;Client {client_number} stored. Waiting for the other client...&quot;)
+        both_received.wait()
+
+        individual = selection_sort(array.copy(), f&quot;Client {client_number}&quot;)
+        send_json(client_socket, {&quot;case&quot;: 1, &quot;individual_sorted&quot;: individual})
+
+        with lock:
+            if merged_sorted is None:
+                merged = client_arrays[1] + client_arrays[2]
+                print(f&quot;\nClient 1 Array: {client_arrays[1]}&quot;)
+                print(f&quot;Client 2 Array: {client_arrays[2]}&quot;)
+                print(f&quot;Merged Array: {merged}&quot;)
+                merged_sorted = selection_sort(merged.copy(), &quot;MERGED ARRAY&quot;)
+            result = merged_sorted
+
+        send_json(client_socket, {&quot;case&quot;: 2, &quot;merged_sorted&quot;: result})
+        print(f&quot;Client {client_number} connection closed.&quot;)
+    except (OSError, json.JSONDecodeError, ValueError, KeyError) as exc:
+        print(f&quot;Client {client_number} error: {exc}&quot;)
+    finally:
+        client_socket.close()</pre>
+  <p class="why"><strong>main</strong> — Accepts exactly two clients and gives each a thread, because accept and recv block.</p>
+  <pre>def main() -&gt; None:
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    server.bind((HOST, PORT))
+    server.listen(2)
+    print(&quot;=&quot; * 70)
+    print(&quot;TCP SORTING SERVER&quot;)
+    print(&quot;=&quot; * 70)
+    print(&quot;Protocol: TCP&quot;)
+    print(&quot;Algorithm: Selection Sort&quot;)
+    print(f&quot;Listening on {HOST}:{PORT}&quot;)
+    print(&quot;Waiting for 2 clients...&quot;)
+
+    threads = []
+    try:
+        for number in (1, 2):
+            client_socket, address = server.accept()
+            print(f&quot;\nClient {number} accepted.&quot;)
+            thread = threading.Thread(
+                target=handle_client,
+                args=(client_socket, address, number),
+                daemon=True,
+            )
+            thread.start()
+            threads.append(thread)
+        for thread in threads:
+            thread.join()
+    except KeyboardInterrupt:
+        print(&quot;\nServer stopped.&quot;)
+    finally:
+        server.close()
+        print(&quot;Server closed.&quot;)
+
+
+if __name__ == &quot;__main__&quot;:
+    main()</pre>
+  <p class="filetag">exp8_tcp_sort_client.py — One TCP client. Run it twice, as client 1 and client 2, after the server is up.</p>
+  <p class="why"><strong>Top of the file</strong> — Same newline reader as the server. The host defaults to this machine.</p>
+  <pre>&quot;&quot;&quot;Experiment 8: TCP client for the selection-sort server.
+
+Run the server first, then:
+  python exp8_tcp_sort_client.py 1
+  python exp8_tcp_sort_client.py 2
+
+Optional: python exp8_tcp_sort_client.py 1 127.0.0.1 8000
+&quot;&quot;&quot;
+
+from __future__ import annotations
+
+import json
+import socket
+import sys</pre>
+  <p class="why"><strong>LineReader</strong> — Reads one JSON line. Needed because the two replies (case 1 and case 2) can arrive in a single recv.</p>
+  <pre>class LineReader:
+    def __init__(self, sock: socket.socket) -&gt; None:
+        self.sock = sock
+        self.buffer = b&quot;&quot;
+
+    def read_json(self):
+        while b&quot;\n&quot; not in self.buffer:
+            chunk = self.sock.recv(4096)
+            if not chunk:
+                raise ConnectionError(&quot;server closed the connection&quot;)
+            self.buffer += chunk
+        line, self.buffer = self.buffer.split(b&quot;\n&quot;, 1)
+        return json.loads(line.decode())</pre>
+  <p class="why"><strong>main</strong> — Connects, sends the numbers you type, then prints the individual sorted array and the merged sorted array.</p>
+  <pre>def main() -&gt; None:
+    client_no = sys.argv[1] if len(sys.argv) &gt; 1 else &quot;1&quot;
+    host = sys.argv[2] if len(sys.argv) &gt; 2 else &quot;127.0.0.1&quot;
+    port = int(sys.argv[3]) if len(sys.argv) &gt; 3 else 8000
+
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.connect((host, port))
+    print(&quot;=&quot; * 50)
+    print(f&quot;CLIENT {client_no}&quot;)
+    print(&quot;=&quot; * 50)
+    print(f&quot;Connected to {host}:{port}&quot;)
+
+    raw = input(&quot;\nEnter array elements separated by spaces: &quot;).strip()
+    array = [int(part) for part in raw.split()]
+    print(&quot;Array entered:&quot;, array)
+    sock.sendall((json.dumps(array) + &quot;\n&quot;).encode())
+    print(&quot;Array sent to Server.&quot;)
+
+    reader = LineReader(sock)
+    case1 = reader.read_json()
+    print(&quot;\n&quot; + &quot;=&quot; * 50)
+    print(&quot;CASE 1: INDIVIDUAL SORTING&quot;)
+    print(&quot;=&quot; * 50)
+    print(&quot;Sorted Array:&quot;, case1[&quot;individual_sorted&quot;])
+
+    case2 = reader.read_json()
+    print(&quot;\n&quot; + &quot;=&quot; * 50)
+    print(&quot;CASE 2: MERGE AND SORT&quot;)
+    print(&quot;=&quot; * 50)
+    print(&quot;Final Merged Sorted Array:&quot;, case2[&quot;merged_sorted&quot;])
+
+    sock.close()
+    print(&quot;\nConnection closed.&quot;)
+
+
+if __name__ == &quot;__main__&quot;:
+    main()</pre>
+  <h3 id="e8-viva">Viva</h3>
+  <details><summary>Why a newline after the JSON?</summary><p>TCP is a stream. Two sends can arrive in one recv, or one send can arrive in pieces. Reading until <code>\n</code> recovers the message boundary.</p></details>
+  <details><summary>Why threads?</summary><p><code>accept</code> and <code>recv</code> block. A thread per client lets the server take the second array while the first client is still connected.</p></details>
+  <details><summary>Why copy the array before sorting?</summary><p>Selection sort swaps in place. The merge still needs the original two lists.</p></details>
+  <h3 id="e8-run">Run</h3>
+  <p class="run">python exp8_tcp_sort_server.py<br>python exp8_tcp_sort_client.py 1<br>python exp8_tcp_sort_client.py 2</p>
+</article>
+
+<article data-panel="e9" hidden>
+  <p class="kicker">Experiment 9 · Transport</p>
+  <h1>UDP group chat</h1>
+  <p class="aim">Several clients talk through one UDP server. There is no connection, only datagrams.</p>
+  <h3 id="e9-idea">How a client is known</h3>
+  <p>UDP has no handshake. The server remembers each sender as the pair <code>(IP, port)</code> from <code>recvfrom</code>. The first datagram from that pair is the username. Later datagrams are chat text. <code>bye</code> deletes that pair and tells the others.</p>
+  <p>A message is sent to every stored address except the sender. The sender already has the text on their own screen.</p>
+  <h3 id="e9-steps">Client shape</h3>
+  <ul>
+    <li>One socket, <code>SOCK_DGRAM</code>, aimed at <code>127.0.0.1:5010</code> unless you pass another host.</li>
+    <li>A background thread blocks on <code>recvfrom</code> so incoming lines appear while you type.</li>
+    <li>The main thread reads the keyboard and <code>sendto</code>s each line. UDP does not guarantee order or delivery, and it does not retry.</li>
+  </ul>
+  <div class="say"><strong>Say this.</strong> TCP would give one ordered byte stream per client. UDP gives independent datagrams. The chat works only because the application itself keeps the address book and decides what a “join” is.</div>
+  <h3 id="e9-code">Code to point at</h3>
+  <pre>socket.socket(AF_INET, SOCK_DGRAM)
+bind(("0.0.0.0", 5010))
+data, address = recvfrom(1024)
+if address not in clients:
+    clients[address] = message   # first packet is the name
+else:
+    sendto(text, every other address)</pre>
+  <h3 id="e9-src">The code</h3>
+  <p class="filetag">exp9_udp_chat_server.py — UDP chat server. There is no connection. A client is just the IP and port on each datagram.</p>
+  <p class="why"><strong>Top of the file</strong> — Port 5010, all interfaces. clients maps (ip, port) to a username.</p>
+  <pre>&quot;&quot;&quot;Experiment 9: UDP group chat server.
+
+The first datagram from an address is that client&#x27;s username.
+Later datagrams are broadcast to every other client.
+A client leaves by sending bye.
+
+Run: python exp9_udp_chat_server.py
+Then start two or more copies of exp9_udp_chat_client.py
+&quot;&quot;&quot;
+
+from __future__ import annotations
+
+import socket
+
+HOST = &quot;0.0.0.0&quot;
+PORT = 5010</pre>
+  <p class="why"><strong>main</strong> — The first datagram from an address is the username. Later datagrams are chat, forwarded to everyone except the sender. bye deletes that address.</p>
+  <pre>def main() -&gt; None:
+    server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    server.bind((HOST, PORT))
+    clients: dict[tuple[str, int], str] = {}
+
+    print(&quot;=== UDP GROUP CHAT SERVER ===&quot;)
+    print(f&quot;Server is running on port {PORT}...&quot;)
+    print(&quot;Press Ctrl+C to stop.&quot;)
+
+    try:
+        while True:
+            data, address = server.recvfrom(1024)
+            message = data.decode(errors=&quot;replace&quot;).strip()
+            if not message:
+                continue
+
+            if address not in clients:
+                clients[address] = message
+                print(f&quot;[JOIN] {message} {address} connected.&quot;)
+                alert = f&quot;\n*** {message} has joined the chat room! ***&quot;.encode()
+                for other in clients:
+                    if other != address:
+                        server.sendto(alert, other)
+                continue
+
+            username = clients[address]
+            if message.lower() == &quot;bye&quot;:
+                print(f&quot;[LEAVE] {username} {address} disconnected.&quot;)
+                del clients[address]
+                alert = f&quot;\n*** {username} has left the chat room. ***&quot;.encode()
+                for other in clients:
+                    server.sendto(alert, other)
+                continue
+
+            print(f&quot;[{username}]: {message}&quot;)
+            outgoing = f&quot;\n[{username}]: {message}&quot;.encode()
+            for other in list(clients):
+                if other != address:
+                    server.sendto(outgoing, other)
+    except KeyboardInterrupt:
+        print(&quot;\nServer stopped.&quot;)
+    finally:
+        server.close()
+
+
+if __name__ == &quot;__main__&quot;:
+    main()</pre>
+  <p class="filetag">exp9_udp_chat_client.py — UDP chat client. A second thread prints incoming lines while you type.</p>
+  <p class="why"><strong>Top of the file</strong> — Defaults to 127.0.0.1:5010. Pass another IP if the server is on a different machine.</p>
+  <pre>&quot;&quot;&quot;Experiment 9: UDP group chat client.
+
+Run the server first, then:
+  python exp9_udp_chat_client.py
+  python exp9_udp_chat_client.py 127.0.0.1 5010
+
+Type bye to leave.
+&quot;&quot;&quot;
+
+from __future__ import annotations
+
+import socket
+import sys
+import threading
+
+HOST = sys.argv[1] if len(sys.argv) &gt; 1 else &quot;127.0.0.1&quot;
+PORT = int(sys.argv[2]) if len(sys.argv) &gt; 2 else 5010
+SERVER = (HOST, PORT)</pre>
+  <p class="why"><strong>receive_messages</strong> — Blocks on recvfrom. Without this thread, input() would stop you seeing other people&#x27;s messages.</p>
+  <pre>def receive_messages(sock: socket.socket, stop: threading.Event) -&gt; None:
+    while not stop.is_set():
+        try:
+            data, _ = sock.recvfrom(1024)
+        except OSError:
+            break
+        print(&quot;\n&quot; + data.decode(errors=&quot;replace&quot;).strip())
+        print(&quot;You: &quot;, end=&quot;&quot;, flush=True)</pre>
+  <p class="why"><strong>main</strong> — Sends the username first, then each line you type. bye tells the server you left.</p>
+  <pre>def main() -&gt; None:
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    print(&quot;=== UDP GROUP CHAT CLIENT ===&quot;)
+    username = input(&quot;Enter your username to join: &quot;).strip() or &quot;user&quot;
+    sock.sendto(username.encode(), SERVER)
+    print(f&quot;Welcome to the room, {username}! Type &#x27;bye&#x27; to quit.\n&quot;)
+
+    stop = threading.Event()
+    worker = threading.Thread(target=receive_messages, args=(sock, stop), daemon=True)
+    worker.start()
+
+    try:
+        while True:
+            message = input(&quot;You: &quot;)
+            sock.sendto(message.encode(), SERVER)
+            if message.strip().lower() == &quot;bye&quot;:
+                print(&quot;Leaving chat room...&quot;)
+                break
+    except (KeyboardInterrupt, EOFError):
+        sock.sendto(b&quot;bye&quot;, SERVER)
+        print(&quot;\nLeaving chat room...&quot;)
+    finally:
+        stop.set()
+        sock.close()
+
+
+if __name__ == &quot;__main__&quot;:
+    main()</pre>
+  <h3 id="e9-viva">Viva</h3>
+  <details><summary>What identifies a client if there is no connection?</summary><p>The source IP and source port on each datagram. Two programs on one laptop get different ports, so they are two clients.</p></details>
+  <details><summary>What is lost if a datagram is dropped?</summary><p>That one line. The server does not notice, and the client does not resend. There is no timeout in this program.</p></details>
+  <details><summary>Why is the receive loop a thread?</summary><p><code>input()</code> blocks. Without a second thread the client could not print other people’s messages until you pressed Enter.</p></details>
+  <h3 id="e9-run">Run</h3>
+  <p class="run">python exp9_udp_chat_server.py<br>python exp9_udp_chat_client.py</p>
+  <p>Type <code>bye</code> to leave.</p>
+</article>
+
+<article data-panel="e10" hidden>
+  <p class="kicker">Experiment 10 · Data link</p>
+  <h1>Stop-and-Wait ARQ</h1>
+  <p class="aim">Send one packet, wait for its ACK, and retransmit if the data or the ACK is lost.</p>
+  <h3 id="e10-idea">Rules</h3>
+  <ul>
+    <li>The sender does not transmit packet n+1 until ACK for packet n has arrived.</li>
+    <li>Sequence numbers alternate 0, 1, 0, 1. Packet 1 is sequence 0 because <code>(id − 1) % 2</code>.</li>
+    <li>A lost data frame: the receiver never ACKs. The sender waits <code>timeout</code> after the data should have arrived, then sends the same packet again.</li>
+    <li>A lost ACK: the receiver already has the data, but the sender still times out and retransmits. The sequence number lets the receiver recognise the duplicate.</li>
+    <li>In this program each listed packet id is dropped once, on its first try. The retry gets through.</li>
+  </ul>
+  <h3 id="e10-trace">Trace to memorise</h3>
+  <p>Four packets, data 2 lost, ACK 3 lost. Times use data = 0.50 and ACK = 0.25, timeout = 2.00.</p>
+  <div class="wrap"><table>
+    <tr><th>Time</th><th>Seq</th><th>Event</th></tr>
+    <tr><td>0.00–0.75</td><td>0</td><td>Packet 1 delivered, ACK received</td></tr>
+    <tr><td>0.75–1.25</td><td>1</td><td>Packet 2 data lost</td></tr>
+    <tr><td>1.25–3.25</td><td></td><td>Timeout, then retransmit</td></tr>
+    <tr><td>3.25–4.00</td><td>1</td><td>Packet 2 delivered, ACK received</td></tr>
+    <tr><td>4.00–4.75</td><td>0</td><td>Packet 3 delivered, ACK lost</td></tr>
+    <tr><td>4.75–6.75</td><td></td><td>Timeout</td></tr>
+    <tr><td>6.75–7.50</td><td>0</td><td>Packet 3 retransmitted, ACK received</td></tr>
+    <tr><td>7.50–8.25</td><td>1</td><td>Packet 4 delivered, ACK received</td></tr>
+  </table></div>
+  <p>Total time 8.25. Five data deliveries for four packets, because packet 2 and packet 3 were each sent twice.</p>
+  <div class="say"><strong>Say this.</strong> The window size is 1. The link sits idle while the ACK travels back, so utilisation is low on a long fat pipe. Go-Back-N and Selective Repeat keep more packets in flight. Those are not this experiment.</div>
+  <h3 id="e10-gui">What the window shows</h3>
+  <p><code>exp10_stop_and_wait_gui.py</code> draws the same events: sender and receiver state, a packet moving on the channel, a timeout bar, and a ladder diagram. You can pause, step, and inject the next data loss or ACK loss.</p>
+  <h3 id="e10-src">The code</h3>
+  <p class="filetag">exp10_stop_and_wait.py — Stop-and-Wait ARQ. One data packet is outstanding. Loss causes a timeout and a retransmission.</p>
+  <p class="why"><strong>Top of the file</strong> — Event is one row of the trace: packet, DATA or ACK or TIMEOUT, start time, end time, and what happened.</p>
+  <pre>&quot;&quot;&quot;Experiment 10: Stop-and-Wait ARQ.
+
+The sender transmits one data packet and waits for its ACK.
+A lost data packet or a lost ACK causes a timeout and a retransmission.
+Sequence numbers alternate between 0 and 1.
+
+Run a text trace:
+  python exp10_stop_and_wait.py
+  python exp10_stop_and_wait.py 6 2,4 3
+
+Arguments: packet_count  lost_data_ids  lost_ack_ids
+Example above sends 6 packets, drops data 2 and 4, and drops ACK 3.
+
+The windowed visualiser is exp10_stop_and_wait_gui.py (same simulate()).
+&quot;&quot;&quot;
+
+from __future__ import annotations
+
+import sys
+from dataclasses import dataclass
+</pre>
+  <p class="why"><strong>Event</strong> — sequence is 0 or 1. Packet 1 is sequence 0, packet 2 is sequence 1, because only two numbers are needed when the window is 1.</p>
+  <pre>@dataclass(frozen=True)
+class Event:
+    packet_id: int
+    packet_type: str
+    start: float
+    end: float
+    status: str
+
+    @property
+    def sequence(self) -&gt; int:
+        return (self.packet_id - 1) % 2</pre>
+  <p class="why"><strong>simulate</strong> — Sends a packet and waits for its ACK. A listed data loss or ACK loss happens once, on the first try. The sender then waits out the timeout and sends that packet again.</p>
+  <pre>def simulate(
+    packet_count: int = 20,
+    data_losses: list[int] | None = None,
+    ack_losses: list[int] | None = None,
+    timeout: float = 2.0,
+    data_time: float = 0.5,
+    ack_time: float = 0.25,
+) -&gt; list[Event]:
+    &quot;&quot;&quot;Build a Stop-and-Wait timeline.
+
+    Each listed packet id is lost once (first transmission only), matching
+    the GUI: a data loss and an ACK loss are separate one-shot events.
+    &quot;&quot;&quot;
+    if packet_count &lt; 1:
+        raise ValueError(&quot;packet_count must be at least 1&quot;)
+    data_loss_set = set(data_losses or ())
+    ack_loss_set = set(ack_losses or ())
+    events: list[Event] = []
+    now = 0.0
+    used_data: set[int] = set()
+    used_ack: set[int] = set()
+
+    for packet_id in range(1, packet_count + 1):
+        attempt = 0
+        while True:
+            attempt += 1
+            note = &quot;&quot; if attempt == 1 else f&quot; (retry {attempt - 1})&quot;
+            start = now
+            end = start + data_time
+            if packet_id in data_loss_set and packet_id not in used_data:
+                used_data.add(packet_id)
+                events.append(Event(packet_id, &quot;DATA&quot;, start, end, &quot;LOST&quot; + note))
+                now = end + timeout
+                events.append(
+                    Event(
+                        packet_id,
+                        &quot;TIMEOUT&quot;,
+                        end,
+                        now,
+                        f&quot;No ACK; retransmit packet {packet_id}&quot;,
+                    )
+                )
+                continue
+
+            events.append(Event(packet_id, &quot;DATA&quot;, start, end, &quot;DELIVERED&quot; + note))
+            ack_start = end
+            ack_end = ack_start + ack_time
+            if packet_id in ack_loss_set and packet_id not in used_ack:
+                used_ack.add(packet_id)
+                events.append(Event(packet_id, &quot;ACK&quot;, ack_start, ack_end, &quot;LOST&quot;))
+                now = ack_end + timeout
+                events.append(
+                    Event(
+                        packet_id,
+                        &quot;TIMEOUT&quot;,
+                        ack_end,
+                        now,
+                        f&quot;ACK lost; retransmit packet {packet_id}&quot;,
+                    )
+                )
+                continue
+
+            events.append(Event(packet_id, &quot;ACK&quot;, ack_start, ack_end, &quot;RECEIVED&quot;))
+            now = ack_end
+            break
+    return events</pre>
+  <p class="why"><strong>parse_ids</strong> — Turns the command-line text 2,4 into the packet ids to drop.</p>
+  <pre>def parse_ids(text: str) -&gt; list[int]:
+    text = text.strip()
+    if not text or text == &quot;-&quot;:
+        return []
+    return [int(part) for part in text.split(&quot;,&quot;) if part.strip()]</pre>
+  <p class="why"><strong>print_trace</strong> — Prints the time, sequence, type, and status, then counts deliveries, losses, and timeouts.</p>
+  <pre>def print_trace(events: list[Event]) -&gt; None:
+    print(f&quot;{&#x27;Time&#x27;:&lt;14} {&#x27;Seq&#x27;:&lt;4} {&#x27;Type&#x27;:&lt;8} {&#x27;Packet&#x27;:&lt;8} Status&quot;)
+    print(&quot;-&quot; * 72)
+    for event in events:
+        span = f&quot;{event.start:.2f}-{event.end:.2f}&quot;
+        seq = &quot;-&quot; if event.packet_type == &quot;TIMEOUT&quot; else str(event.sequence)
+        print(f&quot;{span:&lt;14} {seq:&lt;4} {event.packet_type:&lt;8} {event.packet_id:&lt;8} {event.status}&quot;)
+
+    delivered = [e for e in events if e.packet_type == &quot;DATA&quot; and e.status.startswith(&quot;DELIVERED&quot;)]
+    lost = [e for e in events if &quot;LOST&quot; in e.status]
+    timeouts = [e for e in events if e.packet_type == &quot;TIMEOUT&quot;]
+    print()
+    print(f&quot;Data deliveries : {len(delivered)}&quot;)
+    print(f&quot;Losses          : {len(lost)}&quot;)
+    print(f&quot;Timeouts        : {len(timeouts)}&quot;)
+    if events:
+        print(f&quot;Total time      : {events[-1].end:.2f}&quot;)</pre>
+  <p class="why"><strong>main</strong> — Defaults to 5 packets, drop data packet 2, drop ACK of packet 4. Arguments override that.</p>
+  <pre>def main() -&gt; None:
+    packet_count = int(sys.argv[1]) if len(sys.argv) &gt; 1 else 5
+    data_losses = parse_ids(sys.argv[2]) if len(sys.argv) &gt; 2 else [2]
+    ack_losses = parse_ids(sys.argv[3]) if len(sys.argv) &gt; 3 else [4]
+    print(&quot;Experiment 10: Stop-and-Wait ARQ&quot;)
+    print(f&quot;Packets: {packet_count}   lost DATA: {data_losses or &#x27;-&#x27;}   lost ACK: {ack_losses or &#x27;-&#x27;}&quot;)
+    print(&quot;Sender waits for ACK 0/1 before sending the next packet.\n&quot;)
+    print_trace(
+        simulate(
+            packet_count=packet_count,
+            data_losses=data_losses,
+            ack_losses=ack_losses,
+        )
+    )
+    print(&quot;\nFor the animated ladder diagram:&quot;)
+    print(&quot;  python exp10_stop_and_wait_gui.py&quot;)
+
+
+if __name__ == &quot;__main__&quot;:
+    main()</pre>
+  <p class="filetag">exp10_stop_and_wait_gui.py — the window. It does not decide the protocol. It draws the events that simulate() already computed.</p>
+  <p class="why"><strong>start_simulation</strong> — Reads packet count, which ids to drop, and the timeout. Calls simulate() from exp10_stop_and_wait.py, then steps through the events.</p>
+  <pre>    def start_simulation(self):
+        if self.is_running and self.is_paused:
+            # Resume from pause
+            self.is_paused = False
+            self.btn_pause.config(text=&quot;⏸ Pause&quot;)
+            self.status_lbl.config(text=&quot;Status: Running&quot;, fg=ACCENT_GREEN)
+            self._animate_loop()
+            return
+
+        params = self._parse_inputs()
+        if not params:
+            return
+
+        count, data_losses, ack_losses, timeout = params
+        self.reset_all()
+
+        # Generate event trace
+        try:
+            self.events = simulate(
+                packet_count=count,
+                data_losses=data_losses,
+                ack_losses=ack_losses,
+                timeout=timeout,
+                data_time=0.5,
+                ack_time=0.25
+            )
+        except Exception as exc:
+            messagebox.showerror(&quot;Simulation Error&quot;, str(exc))
+            return
+
+        self.is_running = True
+        self.is_paused = False
+        self.current_event_idx = -1
+        self.btn_run.config(state=tk.DISABLED)
+        self.btn_pause.config(state=tk.NORMAL, text=&quot;⏸ Pause&quot;)
+        self.status_lbl.config(text=f&quot;Status: Simulating {count} packets...&quot;, fg=ACCENT_BLUE)
+
+        # Redraw axes to fit all events
+        self._draw_ladder_axes()
+        self.step_next_event()</pre>
+  <p class="why"><strong>toggle_pause</strong> — Freezes the animation. The trace itself does not change.</p>
+  <pre>    def toggle_pause(self):
+        if not self.is_running:
+            return
+        self.is_paused = not self.is_paused
+        if self.is_paused:
+            self.btn_pause.config(text=&quot;▶ Resume&quot;)
+            self.status_lbl.config(text=&quot;Status: Paused&quot;, fg=ACCENT_AMBER)
+        else:
+            self.btn_pause.config(text=&quot;⏸ Pause&quot;)
+            self.status_lbl.config(text=&quot;Status: Running&quot;, fg=ACCENT_GREEN)
+            self._animate_loop()</pre>
+  <p class="why"><strong>inject_data_drop</strong> — Marks the next DATA frame to be drawn as lost.</p>
+  <pre>    def inject_data_drop(self):
+        self.inject_drop_data = True
+        self.status_lbl.config(text=&quot;💥 Fault Injected: Next DATA packet will be dropped!&quot;, fg=ACCENT_RED)</pre>
+  <p class="why"><strong>inject_ack_drop</strong> — Marks the next ACK to be drawn as lost.</p>
+  <pre>    def inject_ack_drop(self):
+        self.inject_drop_ack = True
+        self.status_lbl.config(text=&quot;💥 Fault Injected: Next ACK packet will be dropped!&quot;, fg=ACCENT_AMBER)</pre>
+  <p class="why"><strong>step_next_event</strong> — Moves to the next row of the trace and hands it to _process_event.</p>
+  <pre>    def step_next_event(self):
+        if not self.events:
+            params = self._parse_inputs()
+            if not params:
+                return
+            count, data_losses, ack_losses, timeout = params
+            self.events = simulate(count, data_losses, ack_losses, timeout)
+            self._draw_ladder_axes()
+
+        if self.current_event_idx + 1 &gt;= len(self.events):
+            self.is_running = False
+            self.btn_run.config(state=tk.NORMAL, text=&quot;▶ RE-RUN&quot;)
+            self.btn_pause.config(state=tk.DISABLED)
+            self.status_lbl.config(text=&quot;Status: Completed all packets!&quot;, fg=ACCENT_GREEN)
+            self._draw_channel_background(sender_state=&quot;IDLE&quot;, receiver_state=&quot;ACCEPTED&quot;, seq_num=&quot;0&quot;, timer_pct=0.0)
+            return
+
+        self.current_event_idx += 1
+        event = self.events[self.current_event_idx]
+        self._process_event(event)</pre>
+  <p class="why"><strong>_process_event</strong> — Updates sender and receiver state from that row: delivered, lost, or timeout.</p>
+  <pre>    def _process_event(self, event: Event):
+        # Check dynamic error injection
+        is_lost = event.status.startswith(&quot;LOST&quot;)
+        if self.inject_drop_data and event.packet_type == &quot;DATA&quot; and not is_lost:
+            is_lost = True
+            self.inject_drop_data = False
+        if self.inject_drop_ack and event.packet_type == &quot;ACK&quot; and not is_lost:
+            is_lost = True
+            self.inject_drop_ack = False
+
+        seq = str(event.packet_id % 2)
+
+        # Update stats
+        tag = &quot;DATA_OK&quot;
+        if event.packet_type == &quot;DATA&quot;:
+            if &quot;retry&quot; in event.status:
+                self.stat_retries += 1
+                tag = &quot;RETRY&quot;
+            else:
+                self.stat_sent += 1
+            if is_lost:
+                self.stat_data_lost += 1
+                tag = &quot;LOST&quot;
+        elif event.packet_type == &quot;ACK&quot;:
+            if is_lost:
+                self.stat_ack_lost += 1
+                tag = &quot;LOST&quot;
+            else:
+                self.stat_delivered = max(self.stat_delivered, event.packet_id)
+                tag = &quot;ACK_OK&quot;
+        elif event.packet_type == &quot;TIMEOUT&quot;:
+            self.stat_timeouts += 1
+            tag = &quot;TIMEOUT&quot;
+
+        self._update_stat_cards()
+
+        # Add row to Event Log Treeview
+        item_id = self.tree_log.insert(&quot;&quot;, tk.END, values=(
+            f&quot;{event.start:.2f}s&quot;,
+            f&quot;#{event.packet_id}&quot;,
+            event.packet_type,
+            event.status
+        ), tags=(tag,))
+        self.tree_log.see(item_id)
+
+        # Draw onto Space-Time Ladder Diagram
+        self._add_ladder_event(event, self.current_event_idx, is_lost)
+
+        # Trigger animated packet transfer
+        self._start_packet_animation(event, seq, is_lost)</pre>
+  <details>
+  <summary>Full GUI file, if you are asked about a button or the drawing</summary>
+  <p>The rest of this file is colours, layout, and the canvas. The ARQ rules are in exp10_stop_and_wait.py.</p>
+  <pre>&quot;&quot;&quot;Experiment 10: Modern Graphical User Interface (GUI) Visualizer for Stop-and-Wait ARQ.
+
+Provides real-time interactive visualization of:
+1. Sender and Receiver stations with state indicators and sequence numbers (0 / 1).
+2. Live transmission channel with animated moving packets (DATA / ACK).
+3. Packet loss and ACK loss simulation with visual drop effects.
+4. Sender timeout countdown bar and automatic retransmission.
+5. Live Space-Time Sequence Diagram (Ladder Diagram) auto-generated in real-time.
+6. Statistics dashboard and color-coded event log.
+7. Step-by-step stepping, pause, resume, speed control, and dynamic error injection.
+&quot;&quot;&quot;
+
+from __future__ import annotations
+import math
+import sys
+import time
+import tkinter as tk
+from tkinter import ttk, messagebox
+from typing import Optional
+
+# Import simulation logic from exp10_stop_and_wait
+try:
+    from exp10_stop_and_wait import simulate, Event
+except ImportError:
+    # Fallback definition if run standalone
+    from dataclasses import dataclass
+
+    @dataclass(frozen=True)
+    class Event:
+        packet_id: int
+        packet_type: str
+        start: float
+        end: float
+        status: str
+
+    def simulate(packet_count=20, data_losses=None, ack_losses=None, timeout=2.0, data_time=0.5, ack_time=0.25):
+        data_losses = set(data_losses or ())
+        ack_losses = set(ack_losses or ())
+        events = []
+        now = 0.0
+        lost_data_used = set()
+        lost_ack_used = set()
+        for packet_id in range(1, packet_count + 1):
+            attempt = 0
+            while True:
+                attempt += 1
+                suffix = &quot;&quot; if attempt == 1 else f&quot; (retry {attempt - 1})&quot;
+                start = now
+                end = start + data_time
+                if packet_id in data_losses and packet_id not in lost_data_used:
+                    lost_data_used.add(packet_id)
+                    events.append(Event(packet_id, &quot;DATA&quot;, start, end, &quot;LOST&quot; + suffix))
+                    now = end + timeout
+                    events.append(Event(packet_id, &quot;TIMEOUT&quot;, end, now, f&quot;No ACK; retransmit packet {packet_id}&quot;))
+                    continue
+
+                events.append(Event(packet_id, &quot;DATA&quot;, start, end, &quot;DELIVERED&quot; + suffix))
+                ack_start = end
+                ack_end = ack_start + ack_time
+                if packet_id in ack_losses and packet_id not in lost_ack_used:
+                    lost_ack_used.add(packet_id)
+                    events.append(Event(packet_id, &quot;ACK&quot;, ack_start, ack_end, &quot;LOST&quot;))
+                    now = ack_end + timeout
+                    events.append(Event(packet_id, &quot;TIMEOUT&quot;, ack_end, now, f&quot;ACK lost; retransmit packet {packet_id}&quot;))
+                    continue
+
+                events.append(Event(packet_id, &quot;ACK&quot;, ack_start, ack_end, &quot;RECEIVED&quot;))
+                now = ack_end
+                break
+        return events
+
+
+# Color Palette (Dark Theme / Cyber-Networking)
+BG_MAIN = &quot;#0b0f19&quot;         # Very dark slate/navy
+BG_PANEL = &quot;#111827&quot;        # Dark slate
+BG_CARD = &quot;#1f2937&quot;         # Card background
+BG_CANVAS = &quot;#070a12&quot;       # Pitch canvas for contrast
+BORDER_COLOR = &quot;#374151&quot;    # Gray border
+TEXT_MAIN = &quot;#f9fafb&quot;       # Bright white
+TEXT_MUTED = &quot;#9ca3af&quot;      # Gray
+ACCENT_BLUE = &quot;#38bdf8&quot;     # Sky blue for DATA
+ACCENT_GREEN = &quot;#34d399&quot;    # Emerald for ACK
+ACCENT_RED = &quot;#f87171&quot;      # Red for LOST
+ACCENT_AMBER = &quot;#fbbf24&quot;    # Amber for TIMEOUT / RETRY
+ACCENT_PURPLE = &quot;#a78bfa&quot;   # Purple accent
+
+
+class StopAndWaitGUI:
+    def __init__(self, root: tk.Tk):
+        self.root = root
+        self.root.title(&quot;Experiment 10: Stop-and-Wait ARQ Visualizer&quot;)
+        self.root.geometry(&quot;1240x820&quot;)
+        self.root.minsize(1050, 720)
+        self.root.configure(bg=BG_MAIN)
+
+        # Simulation state
+        self.events: list[Event] = []
+        self.current_event_idx = -1
+        self.is_running = False
+        self.is_paused = False
+        self.speed_multiplier = 1.0
+
+        # Animation state
+        self.anim_progress = 0.0
+        self.current_packet_rect: Optional[int] = None
+        self.current_packet_text: Optional[int] = None
+        self.current_packet_subtext: Optional[int] = None
+        self.particles: list[dict] = []
+
+        # Real-time protocol metrics
+        self.stat_sent = 0
+        self.stat_delivered = 0
+        self.stat_data_lost = 0
+        self.stat_ack_lost = 0
+        self.stat_timeouts = 0
+        self.stat_retries = 0
+
+        # Dynamic on-the-fly drop injection flags
+        self.inject_drop_data = False
+        self.inject_drop_ack = False
+
+        # Build UI layout
+        self._setup_styles()
+        self._build_header()
+        self._build_main_content()
+        self._build_bottom_controls()
+
+        # Load default preset into fields
+        self.apply_preset(&quot;default&quot;)
+
+        # Initial canvas setup
+        self.root.after(100, self._initial_draw)
+
+    def _setup_styles(self):
+        style = ttk.Style()
+        style.theme_use(&quot;clam&quot;)
+        
+        style.configure(&quot;TFrame&quot;, background=BG_PANEL)
+        style.configure(&quot;TLabel&quot;, background=BG_PANEL, foreground=TEXT_MAIN, font=(&quot;Segoe UI&quot;, 9))
+        style.configure(&quot;TLabelframe&quot;, background=BG_PANEL, foreground=ACCENT_BLUE, bordercolor=BORDER_COLOR)
+        style.configure(&quot;TLabelframe.Label&quot;, background=BG_PANEL, foreground=ACCENT_BLUE, font=(&quot;Segoe UI&quot;, 9, &quot;bold&quot;))
+        
+        # Modern Buttons
+        style.configure(&quot;Accent.TButton&quot;, background=&quot;#0284c7&quot;, foreground=&quot;white&quot;, font=(&quot;Segoe UI&quot;, 9, &quot;bold&quot;), borderwidth=0, padding=6)
+        style.map(&quot;Accent.TButton&quot;, background=[(&quot;active&quot;, &quot;#0369a1&quot;), (&quot;disabled&quot;, &quot;#334155&quot;)])
+
+        style.configure(&quot;Action.TButton&quot;, background=BG_CARD, foreground=TEXT_MAIN, font=(&quot;Segoe UI&quot;, 9), borderwidth=1, bordercolor=BORDER_COLOR, padding=6)
+        style.map(&quot;Action.TButton&quot;, background=[(&quot;active&quot;, &quot;#374151&quot;)])
+
+        style.configure(&quot;Danger.TButton&quot;, background=&quot;#991b1b&quot;, foreground=&quot;white&quot;, font=(&quot;Segoe UI&quot;, 8, &quot;bold&quot;), borderwidth=0, padding=5)
+        style.map(&quot;Danger.TButton&quot;, background=[(&quot;active&quot;, &quot;#b91c1c&quot;)])
+
+        # Treeview (Event Log)
+        style.configure(&quot;Treeview&quot;, background=BG_PANEL, foreground=TEXT_MAIN, fieldbackground=BG_PANEL,
+                        rowheight=24, font=(&quot;Consolas&quot;, 9), borderwidth=0)
+        style.configure(&quot;Treeview.Heading&quot;, background=BG_CARD, foreground=ACCENT_BLUE,
+                        font=(&quot;Segoe UI&quot;, 9, &quot;bold&quot;), borderwidth=1, relief=&quot;flat&quot;)
+        style.map(&quot;Treeview.Heading&quot;, background=[(&quot;active&quot;, &quot;#374151&quot;)])
+        style.map(&quot;Treeview&quot;, background=[(&quot;selected&quot;, &quot;#1e3a8a&quot;)], foreground=[(&quot;selected&quot;, &quot;white&quot;)])
+
+    def _build_header(self):
+        header_frame = tk.Frame(self.root, bg=BG_PANEL, height=55, highlightthickness=1, highlightbackground=BORDER_COLOR)
+        header_frame.pack(fill=tk.X, padx=12, pady=(10, 6))
+
+        # Title and badge
+        title_box = tk.Frame(header_frame, bg=BG_PANEL)
+        title_box.pack(side=tk.LEFT, padx=14, pady=8)
+
+        tk.Label(title_box, text=&quot;STOP-AND-WAIT ARQ&quot;, font=(&quot;Segoe UI&quot;, 13, &quot;bold&quot;), fg=ACCENT_BLUE, bg=BG_PANEL).pack(side=tk.LEFT)
+        tk.Label(title_box, text=&quot;VISUALIZER&quot;, font=(&quot;Segoe UI&quot;, 13, &quot;bold&quot;), fg=&quot;white&quot;, bg=BG_PANEL).pack(side=tk.LEFT, padx=(4, 8))
+        
+        badge = tk.Label(title_box, text=&quot;EXP-10 PROTOCOL LAB&quot;, font=(&quot;Segoe UI&quot;, 8, &quot;bold&quot;),
+                         fg=ACCENT_GREEN, bg=&quot;#064e3b&quot;, padx=6, pady=2)
+        badge.pack(side=tk.LEFT)
+
+        # Quick Presets on Header
+        preset_box = tk.Frame(header_frame, bg=BG_PANEL)
+        preset_box.pack(side=tk.RIGHT, padx=14, pady=8)
+
+        tk.Label(preset_box, text=&quot;Presets:&quot;, font=(&quot;Segoe UI&quot;, 9, &quot;bold&quot;), fg=TEXT_MUTED, bg=BG_PANEL).pack(side=tk.LEFT, padx=(0, 6))
+        
+        btn_p1 = tk.Button(preset_box, text=&quot;Lab Default (3,14 / 7,18)&quot;, font=(&quot;Segoe UI&quot;, 8),
+                           bg=BG_CARD, fg=TEXT_MAIN, activebackground=&quot;#374151&quot;, activeforeground=&quot;white&quot;,
+                           relief=&quot;flat&quot;, cursor=&quot;hand2&quot;, command=lambda: self.apply_preset(&quot;default&quot;))
+        btn_p1.pack(side=tk.LEFT, padx=3)
+
+        btn_p2 = tk.Button(preset_box, text=&quot;Clean (No Loss)&quot;, font=(&quot;Segoe UI&quot;, 8),
+                           bg=BG_CARD, fg=TEXT_MAIN, activebackground=&quot;#374151&quot;, activeforeground=&quot;white&quot;,
+                           relief=&quot;flat&quot;, cursor=&quot;hand2&quot;, command=lambda: self.apply_preset(&quot;clean&quot;))
+        btn_p2.pack(side=tk.LEFT, padx=3)
+
+        btn_p3 = tk.Button(preset_box, text=&quot;Heavy Loss&quot;, font=(&quot;Segoe UI&quot;, 8),
+                           bg=BG_CARD, fg=TEXT_MAIN, activebackground=&quot;#374151&quot;, activeforeground=&quot;white&quot;,
+                           relief=&quot;flat&quot;, cursor=&quot;hand2&quot;, command=lambda: self.apply_preset(&quot;heavy_loss&quot;))
+        btn_p3.pack(side=tk.LEFT, padx=3)
+
+    def _build_main_content(self):
+        content_paned = tk.PanedWindow(self.root, orient=tk.HORIZONTAL, bg=BG_MAIN, bd=0, sashwidth=4, sashpad=0)
+        content_paned.pack(fill=tk.BOTH, expand=True, padx=12, pady=4)
+
+        # LEFT PANE: Animation Canvas (Channel + Space-Time Ladder)
+        left_frame = tk.Frame(content_paned, bg=BG_MAIN)
+        content_paned.add(left_frame, minsize=650, stretch=&quot;always&quot;)
+
+        # Upper Canvas: Animated Host Nodes &amp; Channel
+        channel_container = tk.Frame(left_frame, bg=BG_PANEL, highlightthickness=1, highlightbackground=BORDER_COLOR)
+        channel_container.pack(fill=tk.BOTH, expand=False, pady=(0, 6))
+
+        # Channel header banner
+        ch_banner = tk.Frame(channel_container, bg=BG_CARD, height=28)
+        ch_banner.pack(fill=tk.X)
+        tk.Label(ch_banner, text=&quot;TRANSMISSION CHANNEL &amp; ENDPOINT NODES&quot;, font=(&quot;Segoe UI&quot;, 8, &quot;bold&quot;),
+                 fg=ACCENT_BLUE, bg=BG_CARD).pack(side=tk.LEFT, padx=10, pady=4)
+        
+        self.status_lbl = tk.Label(ch_banner, text=&quot;Status: Ready&quot;, font=(&quot;Segoe UI&quot;, 8, &quot;italic&quot;),
+                                   fg=TEXT_MUTED, bg=BG_CARD)
+        self.status_lbl.pack(side=tk.RIGHT, padx=10)
+
+        # Drawing Canvas for Nodes &amp; Animated Moving Packets
+        self.canvas_channel = tk.Canvas(channel_container, bg=BG_CANVAS, height=230,
+                                        highlightthickness=0)
+        self.canvas_channel.pack(fill=tk.BOTH, expand=True, padx=4, pady=4)
+        self.canvas_channel.bind(&quot;&lt;Configure&gt;&quot;, lambda e: self._draw_channel_background())
+
+        # Lower Canvas: Space-Time Sequence (Ladder) Diagram
+        ladder_container = tk.Frame(left_frame, bg=BG_PANEL, highlightthickness=1, highlightbackground=BORDER_COLOR)
+        ladder_container.pack(fill=tk.BOTH, expand=True)
+
+        ladder_banner = tk.Frame(ladder_container, bg=BG_CARD, height=28)
+        ladder_banner.pack(fill=tk.X)
+        tk.Label(ladder_banner, text=&quot;SPACE-TIME SEQUENCE DIAGRAM (LADDER DIAGRAM)&quot;,
+                 font=(&quot;Segoe UI&quot;, 8, &quot;bold&quot;), fg=ACCENT_PURPLE, bg=BG_CARD).pack(side=tk.LEFT, padx=10, pady=4)
+
+        tk.Label(ladder_banner, text=&quot;Time flows downwards ↓&quot;, font=(&quot;Segoe UI&quot;, 8),
+                 fg=TEXT_MUTED, bg=BG_CARD).pack(side=tk.RIGHT, padx=10)
+
+        # Ladder diagram canvas with vertical scrollbar
+        ladder_inner = tk.Frame(ladder_container, bg=BG_CANVAS)
+        ladder_inner.pack(fill=tk.BOTH, expand=True, padx=4, pady=4)
+
+        self.ladder_canvas = tk.Canvas(ladder_inner, bg=BG_CANVAS, highlightthickness=0)
+        self.ladder_scrollbar = ttk.Scrollbar(ladder_inner, orient=tk.VERTICAL, command=self.ladder_canvas.yview)
+        self.ladder_canvas.configure(yscrollcommand=self.ladder_scrollbar.set)
+
+        self.ladder_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        self.ladder_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        self.ladder_canvas.bind(&quot;&lt;Configure&gt;&quot;, lambda e: self._draw_ladder_axes())
+
+        # RIGHT PANE: Metrics &amp; Event Log
+        right_frame = tk.Frame(content_paned, bg=BG_MAIN, width=380)
+        content_paned.add(right_frame, minsize=340, stretch=&quot;never&quot;)
+
+        # Stats Cards Grid
+        stats_frame = tk.LabelFrame(right_frame, text=&quot;Live Protocol Metrics&quot;, bg=BG_PANEL, fg=ACCENT_BLUE,
+                                    font=(&quot;Segoe UI&quot;, 9, &quot;bold&quot;), padx=8, pady=8,
+                                    highlightthickness=1, highlightbackground=BORDER_COLOR)
+        stats_frame.pack(fill=tk.X, pady=(0, 6))
+
+        grid = tk.Frame(stats_frame, bg=BG_PANEL)
+        grid.pack(fill=tk.X)
+
+        self.card_sent = self._create_metric_card(grid, 0, 0, &quot;Packets Sent&quot;, &quot;0&quot;, ACCENT_BLUE)
+        self.card_delivered = self._create_metric_card(grid, 0, 1, &quot;Delivered&quot;, &quot;0&quot;, ACCENT_GREEN)
+        self.card_data_lost = self._create_metric_card(grid, 1, 0, &quot;DATA Lost&quot;, &quot;0&quot;, ACCENT_RED)
+        self.card_ack_lost = self._create_metric_card(grid, 1, 1, &quot;ACK Lost&quot;, &quot;0&quot;, ACCENT_RED)
+        self.card_timeouts = self._create_metric_card(grid, 2, 0, &quot;Timeouts&quot;, &quot;0&quot;, ACCENT_AMBER)
+        self.card_retries = self._create_metric_card(grid, 2, 1, &quot;Retransmissions&quot;, &quot;0&quot;, ACCENT_PURPLE)
+
+        # Efficiency Card
+        eff_box = tk.Frame(stats_frame, bg=BG_CARD, padx=8, pady=6, highlightthickness=1, highlightbackground=BORDER_COLOR)
+        eff_box.pack(fill=tk.X, pady=(8, 0))
+        tk.Label(eff_box, text=&quot;Channel Utilization / Efficiency:&quot;, font=(&quot;Segoe UI&quot;, 8), fg=TEXT_MUTED, bg=BG_CARD).pack(side=tk.LEFT)
+        self.lbl_efficiency = tk.Label(eff_box, text=&quot;100.0%&quot;, font=(&quot;Segoe UI&quot;, 9, &quot;bold&quot;), fg=ACCENT_GREEN, bg=BG_CARD)
+        self.lbl_efficiency.pack(side=tk.RIGHT)
+
+        # Event Log
+        log_frame = tk.LabelFrame(right_frame, text=&quot;Real-Time Event Log&quot;, bg=BG_PANEL, fg=ACCENT_BLUE,
+                                  font=(&quot;Segoe UI&quot;, 9, &quot;bold&quot;), padx=6, pady=6,
+                                  highlightthickness=1, highlightbackground=BORDER_COLOR)
+        log_frame.pack(fill=tk.BOTH, expand=True)
+
+        columns = (&quot;time&quot;, &quot;pkt&quot;, &quot;type&quot;, &quot;status&quot;)
+        self.tree_log = ttk.Treeview(log_frame, columns=columns, show=&quot;headings&quot;, selectmode=&quot;browse&quot;)
+        self.tree_log.heading(&quot;time&quot;, text=&quot;Time (s)&quot;)
+        self.tree_log.heading(&quot;pkt&quot;, text=&quot;Pkt#&quot;)
+        self.tree_log.heading(&quot;type&quot;, text=&quot;Type&quot;)
+        self.tree_log.heading(&quot;status&quot;, text=&quot;Status / Details&quot;)
+
+        self.tree_log.column(&quot;time&quot;, width=62, anchor=&quot;center&quot;)
+        self.tree_log.column(&quot;pkt&quot;, width=42, anchor=&quot;center&quot;)
+        self.tree_log.column(&quot;type&quot;, width=65, anchor=&quot;center&quot;)
+        self.tree_log.column(&quot;status&quot;, width=170, anchor=&quot;w&quot;)
+
+        # Color tags in Treeview
+        self.tree_log.tag_configure(&quot;DATA_OK&quot;, foreground=&quot;#38bdf8&quot;)
+        self.tree_log.tag_configure(&quot;ACK_OK&quot;, foreground=&quot;#34d399&quot;)
+        self.tree_log.tag_configure(&quot;LOST&quot;, foreground=&quot;#f87171&quot;)
+        self.tree_log.tag_configure(&quot;TIMEOUT&quot;, foreground=&quot;#fbbf24&quot;)
+        self.tree_log.tag_configure(&quot;RETRY&quot;, foreground=&quot;#c084fc&quot;)
+
+        tree_scroll = ttk.Scrollbar(log_frame, orient=tk.VERTICAL, command=self.tree_log.yview)
+        self.tree_log.configure(yscrollcommand=tree_scroll.set)
+
+        tree_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+        self.tree_log.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+    def _create_metric_card(self, parent, row, col, label, value, color):
+        box = tk.Frame(parent, bg=BG_CARD, padx=8, pady=5, highlightthickness=1, highlightbackground=BORDER_COLOR)
+        box.grid(row=row, column=col, sticky=&quot;nsew&quot;, padx=3, pady=3)
+        parent.grid_columnconfigure(col, weight=1)
+
+        tk.Label(box, text=label, font=(&quot;Segoe UI&quot;, 8), fg=TEXT_MUTED, bg=BG_CARD).pack(anchor=&quot;w&quot;)
+        val_lbl = tk.Label(box, text=value, font=(&quot;Segoe UI&quot;, 12, &quot;bold&quot;), fg=color, bg=BG_CARD)
+        val_lbl.pack(anchor=&quot;w&quot;)
+        return val_lbl
+
+    def _build_bottom_controls(self):
+        ctrl_frame = tk.Frame(self.root, bg=BG_PANEL, highlightthickness=1, highlightbackground=BORDER_COLOR)
+        ctrl_frame.pack(fill=tk.X, padx=12, pady=(4, 10))
+
+        # Row 1: Parameters Input
+        params_row = tk.Frame(ctrl_frame, bg=BG_PANEL)
+        params_row.pack(fill=tk.X, padx=10, pady=(6, 4))
+
+        # Packets Count
+        tk.Label(params_row, text=&quot;Total Packets:&quot;, font=(&quot;Segoe UI&quot;, 8, &quot;bold&quot;), fg=TEXT_MUTED, bg=BG_PANEL).pack(side=tk.LEFT, padx=(0, 4))
+        self.ent_count = tk.Entry(params_row, width=5, bg=BG_CARD, fg=TEXT_MAIN, insertbackground=&quot;white&quot;, relief=&quot;flat&quot;)
+        self.ent_count.pack(side=tk.LEFT, padx=(0, 12))
+
+        # Data Losses
+        tk.Label(params_row, text=&quot;DATA Losses (IDs):&quot;, font=(&quot;Segoe UI&quot;, 8, &quot;bold&quot;), fg=ACCENT_BLUE, bg=BG_PANEL).pack(side=tk.LEFT, padx=(0, 4))
+        self.ent_data_loss = tk.Entry(params_row, width=12, bg=BG_CARD, fg=TEXT_MAIN, insertbackground=&quot;white&quot;, relief=&quot;flat&quot;)
+        self.ent_data_loss.pack(side=tk.LEFT, padx=(0, 12))
+
+        # ACK Losses
+        tk.Label(params_row, text=&quot;ACK Losses (IDs):&quot;, font=(&quot;Segoe UI&quot;, 8, &quot;bold&quot;), fg=ACCENT_GREEN, bg=BG_PANEL).pack(side=tk.LEFT, padx=(0, 4))
+        self.ent_ack_loss = tk.Entry(params_row, width=12, bg=BG_CARD, fg=TEXT_MAIN, insertbackground=&quot;white&quot;, relief=&quot;flat&quot;)
+        self.ent_ack_loss.pack(side=tk.LEFT, padx=(0, 12))
+
+        # Timeout
+        tk.Label(params_row, text=&quot;Timeout (s):&quot;, font=(&quot;Segoe UI&quot;, 8, &quot;bold&quot;), fg=ACCENT_AMBER, bg=BG_PANEL).pack(side=tk.LEFT, padx=(0, 4))
+        self.ent_timeout = tk.Entry(params_row, width=5, bg=BG_CARD, fg=TEXT_MAIN, insertbackground=&quot;white&quot;, relief=&quot;flat&quot;)
+        self.ent_timeout.pack(side=tk.LEFT, padx=(0, 12))
+
+        # Speed Slider
+        tk.Label(params_row, text=&quot;Animation Speed:&quot;, font=(&quot;Segoe UI&quot;, 8, &quot;bold&quot;), fg=TEXT_MUTED, bg=BG_PANEL).pack(side=tk.LEFT, padx=(0, 4))
+        self.slider_speed = tk.Scale(params_row, from_=0.25, to=3.0, resolution=0.25, orient=tk.HORIZONTAL,
+                                     bg=BG_PANEL, fg=TEXT_MAIN, highlightthickness=0, troughcolor=BG_CARD,
+                                     activebackground=ACCENT_BLUE, length=120, command=self._on_speed_change)
+        self.slider_speed.set(1.0)
+        self.slider_speed.pack(side=tk.LEFT, padx=(0, 6))
+        self.lbl_speed_val = tk.Label(params_row, text=&quot;1.0x&quot;, font=(&quot;Segoe UI&quot;, 8), fg=ACCENT_BLUE, bg=BG_PANEL)
+        self.lbl_speed_val.pack(side=tk.LEFT)
+
+        # Row 2: Action Buttons &amp; Dynamic Injectors
+        act_row = tk.Frame(ctrl_frame, bg=BG_PANEL)
+        act_row.pack(fill=tk.X, padx=10, pady=(4, 8))
+
+        self.btn_run = tk.Button(act_row, text=&quot;▶ START SIMULATION&quot;, font=(&quot;Segoe UI&quot;, 9, &quot;bold&quot;),
+                                 bg=&quot;#0284c7&quot;, fg=&quot;white&quot;, activebackground=&quot;#0369a1&quot;, activeforeground=&quot;white&quot;,
+                                 relief=&quot;flat&quot;, cursor=&quot;hand2&quot;, padx=12, pady=4, command=self.start_simulation)
+        self.btn_run.pack(side=tk.LEFT, padx=(0, 6))
+
+        self.btn_pause = tk.Button(act_row, text=&quot;⏸ Pause&quot;, font=(&quot;Segoe UI&quot;, 9),
+                                   bg=BG_CARD, fg=TEXT_MAIN, activebackground=&quot;#374151&quot;, activeforeground=&quot;white&quot;,
+                                   relief=&quot;flat&quot;, cursor=&quot;hand2&quot;, padx=10, pady=4, state=tk.DISABLED, command=self.toggle_pause)
+        self.btn_pause.pack(side=tk.LEFT, padx=(0, 6))
+
+        self.btn_step = tk.Button(act_row, text=&quot;⏭ Step Next&quot;, font=(&quot;Segoe UI&quot;, 9),
+                                  bg=BG_CARD, fg=TEXT_MAIN, activebackground=&quot;#374151&quot;, activeforeground=&quot;white&quot;,
+                                  relief=&quot;flat&quot;, cursor=&quot;hand2&quot;, padx=10, pady=4, command=self.step_next_event)
+        self.btn_step.pack(side=tk.LEFT, padx=(0, 6))
+
+        self.btn_reset = tk.Button(act_row, text=&quot;↺ Reset&quot;, font=(&quot;Segoe UI&quot;, 9),
+                                   bg=BG_CARD, fg=TEXT_MAIN, activebackground=&quot;#374151&quot;, activeforeground=&quot;white&quot;,
+                                   relief=&quot;flat&quot;, cursor=&quot;hand2&quot;, padx=10, pady=4, command=self.reset_all)
+        self.btn_reset.pack(side=tk.LEFT, padx=(0, 16))
+
+        # Dynamic Fault Injection Buttons
+        tk.Label(act_row, text=&quot;Inject Error On-The-Fly:&quot;, font=(&quot;Segoe UI&quot;, 8, &quot;bold&quot;), fg=TEXT_MUTED, bg=BG_PANEL).pack(side=tk.LEFT, padx=(0, 6))
+
+        self.btn_inject_data = tk.Button(act_row, text=&quot;💥 Drop Next DATA&quot;, font=(&quot;Segoe UI&quot;, 8, &quot;bold&quot;),
+                                         bg=&quot;#7f1d1d&quot;, fg=&quot;#fca5a5&quot;, activebackground=&quot;#991b1b&quot;, activeforeground=&quot;white&quot;,
+                                         relief=&quot;flat&quot;, cursor=&quot;hand2&quot;, padx=8, pady=4, command=self.inject_data_drop)
+        self.btn_inject_data.pack(side=tk.LEFT, padx=(0, 6))
+
+        self.btn_inject_ack = tk.Button(act_row, text=&quot;💥 Drop Next ACK&quot;, font=(&quot;Segoe UI&quot;, 8, &quot;bold&quot;),
+                                        bg=&quot;#78350f&quot;, fg=&quot;#fde68a&quot;, activebackground=&quot;#92400e&quot;, activeforeground=&quot;white&quot;,
+                                        relief=&quot;flat&quot;, cursor=&quot;hand2&quot;, padx=8, pady=4, command=self.inject_ack_drop)
+        self.btn_inject_ack.pack(side=tk.LEFT)
+
+    def _on_speed_change(self, val):
+        self.speed_multiplier = float(val)
+        self.lbl_speed_val.config(text=f&quot;{self.speed_multiplier:.2f}x&quot;)
+
+    def apply_preset(self, preset_name: str):
+        self.reset_all()
+        if preset_name == &quot;default&quot;:
+            self.ent_count.delete(0, tk.END)
+            self.ent_count.insert(0, &quot;20&quot;)
+            self.ent_data_loss.delete(0, tk.END)
+            self.ent_data_loss.insert(0, &quot;3, 14&quot;)
+            self.ent_ack_loss.delete(0, tk.END)
+            self.ent_ack_loss.insert(0, &quot;7, 18&quot;)
+            self.ent_timeout.delete(0, tk.END)
+            self.ent_timeout.insert(0, &quot;2.0&quot;)
+        elif preset_name == &quot;clean&quot;:
+            self.ent_count.delete(0, tk.END)
+            self.ent_count.insert(0, &quot;10&quot;)
+            self.ent_data_loss.delete(0, tk.END)
+            self.ent_data_loss.insert(0, &quot;0&quot;)
+            self.ent_ack_loss.delete(0, tk.END)
+            self.ent_ack_loss.insert(0, &quot;0&quot;)
+            self.ent_timeout.delete(0, tk.END)
+            self.ent_timeout.insert(0, &quot;2.0&quot;)
+        elif preset_name == &quot;heavy_loss&quot;:
+            self.ent_count.delete(0, tk.END)
+            self.ent_count.insert(0, &quot;12&quot;)
+            self.ent_data_loss.delete(0, tk.END)
+            self.ent_data_loss.insert(0, &quot;2, 5, 8&quot;)
+            self.ent_ack_loss.delete(0, tk.END)
+            self.ent_ack_loss.insert(0, &quot;4, 10&quot;)
+            self.ent_timeout.delete(0, tk.END)
+            self.ent_timeout.insert(0, &quot;1.8&quot;)
+
+    def _initial_draw(self):
+        self._draw_channel_background()
+        self._draw_ladder_axes()
+
+    def _draw_channel_background(self, sender_state=&quot;IDLE&quot;, receiver_state=&quot;IDLE&quot;,
+                                 seq_num=&quot;0&quot;, timer_pct=0.0):
+        c = self.canvas_channel
+        c.delete(&quot;all&quot;)
+        w = c.winfo_width()
+        h = c.winfo_height()
+        if w &lt; 100 or h &lt; 50:
+            return
+
+        node_w = 150
+        node_h = 170
+        y_top = 30
+
+        # SENDER NODE (Station A)
+        x_s1 = 20
+        x_s2 = x_s1 + node_w
+        c.create_rectangle(x_s1, y_top, x_s2, y_top + node_h, fill=BG_CARD, outline=ACCENT_BLUE, width=2)
+        c.create_rectangle(x_s1, y_top, x_s2, y_top + 28, fill=&quot;#0f2b48&quot;, outline=ACCENT_BLUE, width=1)
+        c.create_text((x_s1 + x_s2) / 2, y_top + 14, text=&quot;🖥️ SENDER (A)&quot;, fill=&quot;white&quot;, font=(&quot;Segoe UI&quot;, 9, &quot;bold&quot;))
+
+        # Sender state badge
+        state_colors = {
+            &quot;IDLE&quot;: (&quot;#374151&quot;, &quot;#9ca3af&quot;),
+            &quot;SENDING&quot;: (&quot;#0369a1&quot;, &quot;#38bdf8&quot;),
+            &quot;WAITING_ACK&quot;: (&quot;#854d0e&quot;, &quot;#fde047&quot;),
+            &quot;TIMEOUT&quot;: (&quot;#991b1b&quot;, &quot;#fca5a5&quot;),
+            &quot;RETRANSMITTING&quot;: (&quot;#6b21a8&quot;, &quot;#d8b4fe&quot;),
+        }
+        bg_col, fg_col = state_colors.get(sender_state, (&quot;#374151&quot;, &quot;#9ca3af&quot;))
+        c.create_rectangle(x_s1 + 10, y_top + 38, x_s2 - 10, y_top + 62, fill=bg_col, outline=&quot;&quot;)
+        c.create_text((x_s1 + x_s2) / 2, y_top + 50, text=sender_state, fill=fg_col, font=(&quot;Segoe UI&quot;, 8, &quot;bold&quot;))
+
+        # Sender Details
+        c.create_text(x_s1 + 14, y_top + 80, text=f&quot;Current Seq : {seq_num}&quot;, fill=TEXT_MAIN, font=(&quot;Segoe UI&quot;, 8), anchor=&quot;w&quot;)
+        c.create_text(x_s1 + 14, y_top + 98, text=&quot;Window Size : N = 1&quot;, fill=TEXT_MUTED, font=(&quot;Segoe UI&quot;, 8), anchor=&quot;w&quot;)
+        c.create_text(x_s1 + 14, y_top + 116, text=&quot;Timer Status:&quot;, fill=TEXT_MUTED, font=(&quot;Segoe UI&quot;, 8), anchor=&quot;w&quot;)
+
+        # Timer countdown bar
+        t_bar_x1 = x_s1 + 14
+        t_bar_x2 = x_s2 - 14
+        t_bar_y1 = y_top + 130
+        t_bar_y2 = y_top + 144
+        c.create_rectangle(t_bar_x1, t_bar_y1, t_bar_x2, t_bar_y2, fill=&quot;#111827&quot;, outline=BORDER_COLOR)
+        if timer_pct &gt; 0:
+            fill_w = (t_bar_x2 - t_bar_x1) * min(1.0, timer_pct)
+            t_col = ACCENT_RED if timer_pct &gt;= 0.85 else (ACCENT_AMBER if timer_pct &gt;= 0.5 else ACCENT_GREEN)
+            c.create_rectangle(t_bar_x1 + 1, t_bar_y1 + 1, t_bar_x1 + fill_w, t_bar_y2 - 1, fill=t_col, outline=&quot;&quot;)
+            c.create_text((t_bar_x1 + t_bar_x2) / 2, (t_bar_y1 + t_bar_y2) / 2,
+                          text=f&quot;{int(timer_pct * 100)}%&quot;, fill=&quot;white&quot;, font=(&quot;Segoe UI&quot;, 7, &quot;bold&quot;))
+        else:
+            c.create_text((t_bar_x1 + t_bar_x2) / 2, (t_bar_y1 + t_bar_y2) / 2,
+                          text=&quot;OFF&quot;, fill=TEXT_MUTED, font=(&quot;Segoe UI&quot;, 7))
+
+        # RECEIVER NODE (Station B)
+        x_r2 = w - 20
+        x_r1 = x_r2 - node_w
+        c.create_rectangle(x_r1, y_top, x_r2, y_top + node_h, fill=BG_CARD, outline=ACCENT_GREEN, width=2)
+        c.create_rectangle(x_r1, y_top, x_r2, y_top + 28, fill=&quot;#064e3b&quot;, outline=ACCENT_GREEN, width=1)
+        c.create_text((x_r1 + x_r2) / 2, y_top + 14, text=&quot;🖥️ RECEIVER (B)&quot;, fill=&quot;white&quot;, font=(&quot;Segoe UI&quot;, 9, &quot;bold&quot;))
+
+        rx_bg_col, rx_fg_col = state_colors.get(receiver_state, (&quot;#374151&quot;, &quot;#9ca3af&quot;))
+        if receiver_state == &quot;ACCEPTED&quot;:
+            rx_bg_col, rx_fg_col = (&quot;#065f46&quot;, &quot;#34d399&quot;)
+        elif receiver_state == &quot;DUPLICATE&quot;:
+            rx_bg_col, rx_fg_col = (&quot;#78350f&quot;, &quot;#fde68a&quot;)
+        c.create_rectangle(x_r1 + 10, y_top + 38, x_r2 - 10, y_top + 62, fill=rx_bg_col, outline=&quot;&quot;)
+        c.create_text((x_r1 + x_r2) / 2, y_top + 50, text=receiver_state, fill=rx_fg_col, font=(&quot;Segoe UI&quot;, 8, &quot;bold&quot;))
+
+        expected_seq = seq_num  # In Stop-and-Wait, matches
+        c.create_text(x_r1 + 14, y_top + 80, text=f&quot;Expect Seq : {expected_seq}&quot;, fill=TEXT_MAIN, font=(&quot;Segoe UI&quot;, 8), anchor=&quot;w&quot;)
+        c.create_text(x_r1 + 14, y_top + 98, text=f&quot;Delivered  : {self.stat_delivered}&quot;, fill=ACCENT_GREEN, font=(&quot;Segoe UI&quot;, 8, &quot;bold&quot;), anchor=&quot;w&quot;)
+        c.create_text(x_r1 + 14, y_top + 116, text=&quot;Action: ACK on receive&quot;, fill=TEXT_MUTED, font=(&quot;Segoe UI&quot;, 8), anchor=&quot;w&quot;)
+
+        # TRANSMISSION CHANNEL LANES (Middle)
+        ch_x1 = x_s2 + 10
+        ch_x2 = x_r1 - 10
+        ch_w = ch_x2 - ch_x1
+        if ch_w &gt; 50:
+            # DATA Lane (Upper wire)
+            y_data = y_top + 55
+            c.create_line(ch_x1, y_data, ch_x2, y_data, fill=&quot;#1e3a8a&quot;, width=3, dash=(6, 4))
+            c.create_text(ch_x1 + 10, y_data - 12, text=&quot;DATA Lane (Sender ➔ Receiver)&quot;, fill=ACCENT_BLUE, font=(&quot;Segoe UI&quot;, 8, &quot;bold&quot;), anchor=&quot;w&quot;)
+            # Direction arrows along data lane
+            for step in range(1, 5):
+                ax = ch_x1 + (ch_w * step / 5)
+                c.create_line(ax - 5, y_data - 4, ax, y_data, ax - 5, y_data + 4, fill=&quot;#3b82f6&quot;, width=2)
+
+            # ACK Lane (Lower wire)
+            y_ack = y_top + 125
+            c.create_line(ch_x1, y_ack, ch_x2, y_ack, fill=&quot;#065f46&quot;, width=3, dash=(6, 4))
+            c.create_text(ch_x2 - 10, y_ack + 14, text=&quot;ACK Lane (Receiver ➔ Sender)&quot;, fill=ACCENT_GREEN, font=(&quot;Segoe UI&quot;, 8, &quot;bold&quot;), anchor=&quot;e&quot;)
+            # Direction arrows along ack lane (pointing left)
+            for step in range(1, 5):
+                ax = ch_x1 + (ch_w * step / 5)
+                c.create_line(ax + 5, y_ack - 4, ax, y_ack, ax + 5, y_ack + 4, fill=&quot;#10b981&quot;, width=2)
+
+        # Draw particles if any
+        self._draw_particles()
+
+    def _draw_particles(self):
+        c = self.canvas_channel
+        new_particles = []
+        for p in self.particles:
+            p[&quot;x&quot;] += p[&quot;vx&quot;]
+            p[&quot;y&quot;] += p[&quot;vy&quot;]
+            p[&quot;life&quot;] -= 0.1
+            if p[&quot;life&quot;] &gt; 0:
+                rad = max(1, int(p[&quot;life&quot;] * 4))
+                c.create_oval(p[&quot;x&quot;] - rad, p[&quot;y&quot;] - rad, p[&quot;x&quot;] + rad, p[&quot;y&quot;] + rad,
+                              fill=p[&quot;color&quot;], outline=&quot;&quot;)
+                new_particles.append(p)
+        self.particles = new_particles
+
+    def _spawn_explosion(self, x, y, color):
+        for i in range(16):
+            angle = (i / 16.0) * 2 * math.pi
+            spd = 2.0 + (i % 3) * 1.5
+            self.particles.append({
+                &quot;x&quot;: x,
+                &quot;y&quot;: y,
+                &quot;vx&quot;: math.cos(angle) * spd,
+                &quot;vy&quot;: math.sin(angle) * spd,
+                &quot;life&quot;: 1.0,
+                &quot;color&quot;: color
+            })
+
+    def _draw_ladder_axes(self):
+        c = self.ladder_canvas
+        w = c.winfo_width()
+        if w &lt; 100:
+            return
+
+        # Determine canvas total height based on events count
+        total_events = max(15, len(self.events) * 2 + 5)
+        ladder_h = max(400, total_events * 36)
+        c.configure(scrollregion=(0, 0, w, ladder_h))
+
+        # Clear axes
+        c.delete(&quot;axes&quot;)
+        x_sender = 120
+        x_receiver = w - 120
+
+        # Sender Axis (Left)
+        c.create_line(x_sender, 20, x_sender, ladder_h - 20, fill=ACCENT_BLUE, width=3, tags=&quot;axes&quot;)
+        c.create_rectangle(x_sender - 45, 6, x_sender + 45, 26, fill=BG_CARD, outline=ACCENT_BLUE, tags=&quot;axes&quot;)
+        c.create_text(x_sender, 16, text=&quot;SENDER&quot;, fill=&quot;white&quot;, font=(&quot;Segoe UI&quot;, 8, &quot;bold&quot;), tags=&quot;axes&quot;)
+
+        # Receiver Axis (Right)
+        c.create_line(x_receiver, 20, x_receiver, ladder_h - 20, fill=ACCENT_GREEN, width=3, tags=&quot;axes&quot;)
+        c.create_rectangle(x_receiver - 45, 6, x_receiver + 45, 26, fill=BG_CARD, outline=ACCENT_GREEN, tags=&quot;axes&quot;)
+        c.create_text(x_receiver, 16, text=&quot;RECEIVER&quot;, fill=&quot;white&quot;, font=(&quot;Segoe UI&quot;, 8, &quot;bold&quot;), tags=&quot;axes&quot;)
+
+    def reset_all(self):
+        self.is_running = False
+        self.is_paused = False
+        self.current_event_idx = -1
+        self.events = []
+        self.particles.clear()
+
+        self.stat_sent = 0
+        self.stat_delivered = 0
+        self.stat_data_lost = 0
+        self.stat_ack_lost = 0
+        self.stat_timeouts = 0
+        self.stat_retries = 0
+
+        self._update_stat_cards()
+        self.status_lbl.config(text=&quot;Status: Reset&quot;, fg=TEXT_MUTED)
+
+        # Clear Treeview
+        for row in self.tree_log.get_children():
+            self.tree_log.delete(row)
+
+        # Clear Ladder
+        self.ladder_canvas.delete(&quot;all&quot;)
+        self._draw_ladder_axes()
+
+        # Reset Controls
+        self.btn_run.config(state=tk.NORMAL, text=&quot;▶ START SIMULATION&quot;)
+        self.btn_pause.config(state=tk.DISABLED, text=&quot;⏸ Pause&quot;)
+        self.btn_step.config(state=tk.NORMAL)
+
+        self._draw_channel_background(sender_state=&quot;IDLE&quot;, receiver_state=&quot;IDLE&quot;, seq_num=&quot;0&quot;, timer_pct=0.0)
+
+    def _update_stat_cards(self):
+        self.card_sent.config(text=str(self.stat_sent))
+        self.card_delivered.config(text=str(self.stat_delivered))
+        self.card_data_lost.config(text=str(self.stat_data_lost))
+        self.card_ack_lost.config(text=str(self.stat_ack_lost))
+        self.card_timeouts.config(text=str(self.stat_timeouts))
+        self.card_retries.config(text=str(self.stat_retries))
+
+        total_transmissions = self.stat_sent + self.stat_retries
+        if total_transmissions &gt; 0:
+            eff = (self.stat_delivered / total_transmissions) * 100.0
+            self.lbl_efficiency.config(text=f&quot;{eff:.1f}%&quot;)
+        else:
+            self.lbl_efficiency.config(text=&quot;100.0%&quot;)
+
+    def _parse_inputs(self):
+        try:
+            count = int(self.ent_count.get().strip() or &quot;20&quot;)
+            if count &lt; 1:
+                raise ValueError(&quot;Packet count must be at least 1.&quot;)
+        except ValueError:
+            messagebox.showerror(&quot;Invalid Input&quot;, &quot;Please enter a valid positive number for Packet Count.&quot;)
+            return None
+
+        # Parse Data Losses
+        raw_data = self.ent_data_loss.get().strip()
+        data_losses = set()
+        if raw_data and raw_data != &quot;0&quot;:
+            try:
+                data_losses = {int(x.strip()) for x in raw_data.split(&quot;,&quot;) if x.strip()}
+            except ValueError:
+                messagebox.showerror(&quot;Invalid Input&quot;, &quot;Data loss IDs must be comma-separated integers.&quot;)
+                return None
+
+        # Parse ACK Losses
+        raw_ack = self.ent_ack_loss.get().strip()
+        ack_losses = set()
+        if raw_ack and raw_ack != &quot;0&quot;:
+            try:
+                ack_losses = {int(x.strip()) for x in raw_ack.split(&quot;,&quot;) if x.strip()}
+            except ValueError:
+                messagebox.showerror(&quot;Invalid Input&quot;, &quot;ACK loss IDs must be comma-separated integers.&quot;)
+                return None
+
+        try:
+            timeout = float(self.ent_timeout.get().strip() or &quot;2.0&quot;)
+            if timeout &lt;= 0:
+                raise ValueError()
+        except ValueError:
+            messagebox.showerror(&quot;Invalid Input&quot;, &quot;Timeout must be a positive number.&quot;)
+            return None
+
+        return count, data_losses, ack_losses, timeout
+
+    def start_simulation(self):
+        if self.is_running and self.is_paused:
+            # Resume from pause
+            self.is_paused = False
+            self.btn_pause.config(text=&quot;⏸ Pause&quot;)
+            self.status_lbl.config(text=&quot;Status: Running&quot;, fg=ACCENT_GREEN)
+            self._animate_loop()
+            return
+
+        params = self._parse_inputs()
+        if not params:
+            return
+
+        count, data_losses, ack_losses, timeout = params
+        self.reset_all()
+
+        # Generate event trace
+        try:
+            self.events = simulate(
+                packet_count=count,
+                data_losses=data_losses,
+                ack_losses=ack_losses,
+                timeout=timeout,
+                data_time=0.5,
+                ack_time=0.25
+            )
+        except Exception as exc:
+            messagebox.showerror(&quot;Simulation Error&quot;, str(exc))
+            return
+
+        self.is_running = True
+        self.is_paused = False
+        self.current_event_idx = -1
+        self.btn_run.config(state=tk.DISABLED)
+        self.btn_pause.config(state=tk.NORMAL, text=&quot;⏸ Pause&quot;)
+        self.status_lbl.config(text=f&quot;Status: Simulating {count} packets...&quot;, fg=ACCENT_BLUE)
+
+        # Redraw axes to fit all events
+        self._draw_ladder_axes()
+        self.step_next_event()
+
+    def toggle_pause(self):
+        if not self.is_running:
+            return
+        self.is_paused = not self.is_paused
+        if self.is_paused:
+            self.btn_pause.config(text=&quot;▶ Resume&quot;)
+            self.status_lbl.config(text=&quot;Status: Paused&quot;, fg=ACCENT_AMBER)
+        else:
+            self.btn_pause.config(text=&quot;⏸ Pause&quot;)
+            self.status_lbl.config(text=&quot;Status: Running&quot;, fg=ACCENT_GREEN)
+            self._animate_loop()
+
+    def inject_data_drop(self):
+        self.inject_drop_data = True
+        self.status_lbl.config(text=&quot;💥 Fault Injected: Next DATA packet will be dropped!&quot;, fg=ACCENT_RED)
+
+    def inject_ack_drop(self):
+        self.inject_drop_ack = True
+        self.status_lbl.config(text=&quot;💥 Fault Injected: Next ACK packet will be dropped!&quot;, fg=ACCENT_AMBER)
+
+    def step_next_event(self):
+        if not self.events:
+            params = self._parse_inputs()
+            if not params:
+                return
+            count, data_losses, ack_losses, timeout = params
+            self.events = simulate(count, data_losses, ack_losses, timeout)
+            self._draw_ladder_axes()
+
+        if self.current_event_idx + 1 &gt;= len(self.events):
+            self.is_running = False
+            self.btn_run.config(state=tk.NORMAL, text=&quot;▶ RE-RUN&quot;)
+            self.btn_pause.config(state=tk.DISABLED)
+            self.status_lbl.config(text=&quot;Status: Completed all packets!&quot;, fg=ACCENT_GREEN)
+            self._draw_channel_background(sender_state=&quot;IDLE&quot;, receiver_state=&quot;ACCEPTED&quot;, seq_num=&quot;0&quot;, timer_pct=0.0)
+            return
+
+        self.current_event_idx += 1
+        event = self.events[self.current_event_idx]
+        self._process_event(event)
+
+    def _process_event(self, event: Event):
+        # Check dynamic error injection
+        is_lost = event.status.startswith(&quot;LOST&quot;)
+        if self.inject_drop_data and event.packet_type == &quot;DATA&quot; and not is_lost:
+            is_lost = True
+            self.inject_drop_data = False
+        if self.inject_drop_ack and event.packet_type == &quot;ACK&quot; and not is_lost:
+            is_lost = True
+            self.inject_drop_ack = False
+
+        seq = str(event.packet_id % 2)
+
+        # Update stats
+        tag = &quot;DATA_OK&quot;
+        if event.packet_type == &quot;DATA&quot;:
+            if &quot;retry&quot; in event.status:
+                self.stat_retries += 1
+                tag = &quot;RETRY&quot;
+            else:
+                self.stat_sent += 1
+            if is_lost:
+                self.stat_data_lost += 1
+                tag = &quot;LOST&quot;
+        elif event.packet_type == &quot;ACK&quot;:
+            if is_lost:
+                self.stat_ack_lost += 1
+                tag = &quot;LOST&quot;
+            else:
+                self.stat_delivered = max(self.stat_delivered, event.packet_id)
+                tag = &quot;ACK_OK&quot;
+        elif event.packet_type == &quot;TIMEOUT&quot;:
+            self.stat_timeouts += 1
+            tag = &quot;TIMEOUT&quot;
+
+        self._update_stat_cards()
+
+        # Add row to Event Log Treeview
+        item_id = self.tree_log.insert(&quot;&quot;, tk.END, values=(
+            f&quot;{event.start:.2f}s&quot;,
+            f&quot;#{event.packet_id}&quot;,
+            event.packet_type,
+            event.status
+        ), tags=(tag,))
+        self.tree_log.see(item_id)
+
+        # Draw onto Space-Time Ladder Diagram
+        self._add_ladder_event(event, self.current_event_idx, is_lost)
+
+        # Trigger animated packet transfer
+        self._start_packet_animation(event, seq, is_lost)
+
+    def _add_ladder_event(self, event: Event, index: int, is_lost: bool):
+        c = self.ladder_canvas
+        w = c.winfo_width()
+        x_sender = 120
+        x_receiver = w - 120
+
+        # Vertical position for this event row
+        y_start = 50 + index * 42
+        y_end = y_start + 32
+
+        # Auto-scroll ladder down as events occur
+        c.yview_moveto(min(1.0, (y_start - 100) / max(1, c.bbox(&quot;all&quot;)[3] if c.bbox(&quot;all&quot;) else 500)))
+
+        seq = str(event.packet_id % 2)
+
+        if event.packet_type == &quot;DATA&quot;:
+            if is_lost:
+                x_mid = (x_sender + x_receiver) / 2
+                y_mid = (y_start + y_end) / 2
+                c.create_line(x_sender, y_start, x_mid, y_mid, fill=ACCENT_RED, width=2, dash=(4, 2))
+                c.create_text(x_mid, y_mid, text=&quot;❌ LOST&quot;, fill=ACCENT_RED, font=(&quot;Segoe UI&quot;, 8, &quot;bold&quot;))
+                c.create_text(x_sender + 45, y_start - 8, text=f&quot;DATA {event.packet_id} (Seq {seq})&quot;, fill=ACCENT_BLUE, font=(&quot;Segoe UI&quot;, 7))
+            else:
+                retry_txt = &quot; [RETRY]&quot; if &quot;retry&quot; in event.status else &quot;&quot;
+                c.create_line(x_sender, y_start, x_receiver, y_end, fill=ACCENT_BLUE, width=2, arrow=tk.LAST)
+                c.create_text((x_sender + x_receiver) / 2, (y_start + y_end) / 2 - 8,
+                              text=f&quot;DATA {event.packet_id} (Seq {seq}){retry_txt}&quot;, fill=ACCENT_BLUE, font=(&quot;Segoe UI&quot;, 8))
+                c.create_oval(x_receiver - 3, y_end - 3, x_receiver + 3, y_end + 3, fill=ACCENT_GREEN, outline=&quot;&quot;)
+
+        elif event.packet_type == &quot;ACK&quot;:
+            if is_lost:
+                x_mid = (x_receiver + x_sender) / 2
+                y_mid = (y_start + y_end) / 2
+                c.create_line(x_receiver, y_start, x_mid, y_mid, fill=ACCENT_RED, width=2, dash=(4, 2))
+                c.create_text(x_mid, y_mid, text=&quot;❌ LOST&quot;, fill=ACCENT_RED, font=(&quot;Segoe UI&quot;, 8, &quot;bold&quot;))
+                c.create_text(x_receiver - 45, y_start - 8, text=f&quot;ACK {event.packet_id}&quot;, fill=ACCENT_GREEN, font=(&quot;Segoe UI&quot;, 7))
+            else:
+                c.create_line(x_receiver, y_start, x_sender, y_end, fill=ACCENT_GREEN, width=2, arrow=tk.LAST)
+                c.create_text((x_sender + x_receiver) / 2, (y_start + y_end) / 2 - 8,
+                              text=f&quot;ACK {event.packet_id}&quot;, fill=ACCENT_GREEN, font=(&quot;Segoe UI&quot;, 8))
+                c.create_oval(x_sender - 3, y_end - 3, x_sender + 3, y_end + 3, fill=ACCENT_BLUE, outline=&quot;&quot;)
+
+        elif event.packet_type == &quot;TIMEOUT&quot;:
+            # Timeout bracket on Sender axis
+            c.create_line(x_sender - 8, y_start, x_sender - 16, y_start,
+                          x_sender - 16, y_end, x_sender - 8, y_end, fill=ACCENT_AMBER, width=2)
+            c.create_text(x_sender - 45, (y_start + y_end) / 2,
+                          text=f&quot;⏱️ Timeout\n({event.end - event.start:.1f}s)&quot;, fill=ACCENT_AMBER, font=(&quot;Segoe UI&quot;, 7, &quot;bold&quot;))
+
+    def _start_packet_animation(self, event: Event, seq: str, is_lost: bool):
+        self.anim_event = event
+        self.anim_seq = seq
+        self.anim_lost = is_lost
+        self.anim_step = 0
+        self.anim_total_steps = max(10, int(28 / self.speed_multiplier))
+        self._animate_loop()
+
+    def _animate_loop(self):
+        if not self.is_running or self.is_paused:
+            return
+
+        c = self.canvas_channel
+        w = c.winfo_width()
+        node_w = 150
+        y_top = 30
+        x_s2 = 20 + node_w
+        x_r1 = w - 20 - node_w
+
+        ev = self.anim_event
+        is_data = (ev.packet_type == &quot;DATA&quot;)
+        is_ack = (ev.packet_type == &quot;ACK&quot;)
+        is_timeout = (ev.packet_type == &quot;TIMEOUT&quot;)
+
+        if is_timeout:
+            # Handle timeout event animation: flash timer on sender
+            progress = self.anim_step / self.anim_total_steps
+            self._draw_channel_background(
+                sender_state=&quot;TIMEOUT&quot;,
+                receiver_state=&quot;IDLE&quot;,
+                seq_num=self.anim_seq,
+                timer_pct=min(1.0, progress * 1.2)
+            )
+            self.anim_step += 1
+            if self.anim_step &lt;= self.anim_total_steps:
+                self.root.after(25, self._animate_loop)
+            else:
+                self.step_next_event()
+            return
+
+        # Packet flight progress: 0.0 to 1.0
+        progress = self.anim_step / self.anim_total_steps
+
+        # Check if dropped packet should stop midway
+        stop_at_loss = 0.55
+        if self.anim_lost and progress &gt;= stop_at_loss:
+            # Drop packet!
+            if is_data:
+                drop_x = x_s2 + (x_r1 - x_s2) * stop_at_loss
+                drop_y = y_top + 55
+            else:
+                drop_x = x_r1 - (x_r1 - x_s2) * stop_at_loss
+                drop_y = y_top + 125
+
+            self._spawn_explosion(drop_x, drop_y, ACCENT_RED)
+            self._draw_channel_background(
+                sender_state=&quot;WAITING_ACK&quot; if is_data else &quot;WAITING_ACK&quot;,
+                receiver_state=&quot;IDLE&quot; if is_data else &quot;IDLE&quot;,
+                seq_num=self.anim_seq,
+                timer_pct=0.6
+            )
+            # Draw dropped explosion badge
+            c.create_rectangle(drop_x - 45, drop_y - 14, drop_x + 45, drop_y + 14,
+                               fill=&quot;#7f1d1d&quot;, outline=ACCENT_RED, width=2)
+            c.create_text(drop_x, drop_y, text=&quot;💥 PACKET DROPPED&quot;, fill=&quot;white&quot;, font=(&quot;Segoe UI&quot;, 7, &quot;bold&quot;))
+
+            # Step after short pause
+            self.root.after(int(350 / self.speed_multiplier), self.step_next_event)
+            return
+
+        # Normal flight or pre-drop flight
+        if is_data:
+            current_x = x_s2 + 10 + (x_r1 - x_s2 - 80) * progress
+            current_y = y_top + 55
+            self._draw_channel_background(
+                sender_state=&quot;RETRANSMITTING&quot; if &quot;retry&quot; in ev.status else &quot;SENDING&quot;,
+                receiver_state=&quot;IDLE&quot;,
+                seq_num=self.anim_seq,
+                timer_pct=progress * 0.4
+            )
+            # Draw moving DATA packet capsule
+            c.create_rectangle(current_x - 38, current_y - 14, current_x + 38, current_y + 14,
+                               fill=&quot;#0369a1&quot;, outline=ACCENT_BLUE, width=2)
+            c.create_text(current_x, current_y - 2, text=f&quot;DATA #{ev.packet_id}&quot;, fill=&quot;white&quot;, font=(&quot;Segoe UI&quot;, 8, &quot;bold&quot;))
+            c.create_text(current_x, current_y + 9, text=f&quot;Seq: {self.anim_seq}&quot;, fill=ACCENT_BLUE, font=(&quot;Segoe UI&quot;, 6))
+
+        elif is_ack:
+            current_x = (x_r1 - 10) - (x_r1 - x_s2 - 80) * progress
+            current_y = y_top + 125
+            self._draw_channel_background(
+                sender_state=&quot;WAITING_ACK&quot;,
+                receiver_state=&quot;SENDING ACK&quot;,
+                seq_num=self.anim_seq,
+                timer_pct=0.4 + progress * 0.3
+            )
+            # Draw moving ACK packet capsule
+            c.create_rectangle(current_x - 30, current_y - 12, current_x + 30, current_y + 12,
+                               fill=&quot;#065f46&quot;, outline=ACCENT_GREEN, width=2)
+            c.create_text(current_x, current_y, text=f&quot;ACK #{ev.packet_id}&quot;, fill=&quot;white&quot;, font=(&quot;Segoe UI&quot;, 8, &quot;bold&quot;))
+
+        self.anim_step += 1
+        if self.anim_step &lt;= self.anim_total_steps:
+            self.root.after(25, self._animate_loop)
+        else:
+            # Reached destination!
+            if is_data:
+                self._draw_channel_background(
+                    sender_state=&quot;WAITING_ACK&quot;,
+                    receiver_state=&quot;ACCEPTED&quot;,
+                    seq_num=self.anim_seq,
+                    timer_pct=0.5
+                )
+            elif is_ack:
+                self._draw_channel_background(
+                    sender_state=&quot;ACK RECEIVED&quot;,
+                    receiver_state=&quot;IDLE&quot;,
+                    seq_num=self.anim_seq,
+                    timer_pct=0.0
+                )
+            self.root.after(int(100 / self.speed_multiplier), self.step_next_event)
+
+
+def launch_gui():
+    &quot;&quot;&quot;Start the Tkinter GUI Application.&quot;&quot;&quot;
+    root = tk.Tk()
+    app = StopAndWaitGUI(root)
+    root.mainloop()
+
+
+if __name__ == &quot;__main__&quot;:
+    launch_gui()</pre>
+  </details>
+  <h3 id="e10-viva">Viva</h3>
+  <details><summary>Why are two sequence numbers enough?</summary><p>Only one frame is outstanding. The next new frame must have the other number, so a retransmission cannot be confused with a new frame.</p></details>
+  <details><summary>What if the timeout is shorter than the real round trip?</summary><p>The sender retransmits a frame whose ACK is still on the way. You get duplicates even when nothing was lost.</p></details>
+  <details><summary>Data loss versus ACK loss, from the sender’s point of view?</summary><p>They look the same: the timer expires. The sender cannot tell which one happened. It retransmits either way.</p></details>
+  <h3 id="e10-run">Run</h3>
+  <p class="run">python exp10_stop_and_wait.py 4 2 3<br>python exp10_stop_and_wait_gui.py</p>
+  <p>Arguments are packet count, lost data ids, lost ACK ids.</p>
+</article>
+</main>
+</div>
+<script>
+const tabs = document.querySelectorAll(".tab");
+const panels = document.querySelectorAll("[data-panel]");
+const side = document.getElementById("side");
+const sideNav = document.getElementById("sideNav");
+const scrim = document.getElementById("scrim");
+
+function currentPanel() {
+  return document.querySelector("[data-panel]:not([hidden])");
+}
+
+function buildSide() {
+  sideNav.innerHTML = "";
+  currentPanel().querySelectorAll("h3").forEach((heading) => {
+    const a = document.createElement("a");
+    a.href = "#" + heading.id;
+    a.textContent = heading.textContent;
+    a.addEventListener("click", () => closeSide());
+    sideNav.appendChild(a);
+  });
+  markSide();
+}
+
+function markSide() {
+  const links = [...sideNav.querySelectorAll("a")];
+  const y = window.scrollY + 150;
+  let active = links[0];
+  links.forEach((link) => {
+    const el = document.getElementById(link.getAttribute("href").slice(1));
+    if (el && el.offsetTop <= y) active = link;
+  });
+  links.forEach((link) => link.classList.toggle("active", link === active));
+}
+
+function show(id, scroll) {
+  tabs.forEach((tab) => {
+    const on = tab.dataset.tab === id;
+    tab.setAttribute("aria-selected", on ? "true" : "false");
+    if (on) tab.scrollIntoView({ inline: "center", block: "nearest" });
+  });
+  panels.forEach((panel) => { panel.hidden = panel.dataset.panel !== id; });
+  buildSide();
+  try { localStorage.setItem("cn-tab", id); } catch (e) {}
+  if (scroll) window.scrollTo(0, 0);
+  history.replaceState(null, "", "#" + id);
+}
+
+function closeSide() {
+  side.classList.remove("open");
+  scrim.classList.remove("show");
+}
+
+tabs.forEach((tab) => tab.addEventListener("click", () => show(tab.dataset.tab, true)));
+document.getElementById("openSide").addEventListener("click", () => {
+  side.classList.add("open");
+  scrim.classList.add("show");
+});
+scrim.addEventListener("click", closeSide);
+window.addEventListener("scroll", markSide, { passive: true });
+
+const fromHash = location.hash.replace("#", "");
+const tabFromHash = (fromHash.match(/^e\d+/) || [""])[0];
+const saved = (() => { try { return localStorage.getItem("cn-tab"); } catch (e) { return null; } })();
+const remembered = document.querySelector('[data-panel="' + saved + '"]') ? saved : "e1";
+const start = document.querySelector('[data-panel="' + tabFromHash + '"]') ? tabFromHash : remembered;
+show(start, false);
+const jump = document.getElementById(fromHash);
+if (jump) jump.scrollIntoView();
+</script>
+</body>
+</html>
